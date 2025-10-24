@@ -10,23 +10,28 @@
 <body>
   <header>
     <h1>🌍 LocalUndertake</h1>
-    <p>Impulsa tu marca. Conecta con el mundo. 💼</p>
+    <p>Apoya negocios locales. Conecta con el mundo. 💼</p>
   </header>
 
   <main>
     <!-- FORMULARIO -->
     <section id="add-product-section" class="form-section">
-      <h2>Añadir producto (modo local)</h2>
+      <h2>🛍️ Añadir producto (modo local)</h2>
       <form id="add-product-form">
-        <input id="product-name" type="text" placeholder="Nombre del producto" required>
-        <input id="product-price" type="number" placeholder="Precio (€)" required>
-        <input id="product-seller" type="text" placeholder="Vendedor / Marca" required>
-        <input id="product-image" type="url" placeholder="URL de imagen (opcional)">
-        <div class="buttons">
+        <div class="form-grid">
+          <input id="product-name" type="text" placeholder="Nombre del producto" required>
+          <input id="product-price" type="number" placeholder="Precio (€)" required>
+          <input id="product-seller" type="text" placeholder="Vendedor / Marca" required>
+          <input id="product-image" type="url" placeholder="URL de imagen (opcional)">
+        </div>
+        <div class="form-buttons">
           <button type="submit">Añadir producto</button>
           <button id="clear-local" type="button" class="danger">Borrar productos locales</button>
         </div>
       </form>
+      <p class="note">
+        💡 Los productos se guardan solo en tu navegador por ahora.
+      </p>
     </section>
 
     <!-- GRID DE PRODUCTOS -->
