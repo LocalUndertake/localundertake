@@ -1,3 +1,18 @@
+// Helper: crear tarjeta de producto
+function createProductCard(p) {
+  const div = document.createElement('div');
+  div.className = 'product';
+  div.innerHTML = `
+    <img src="${p.image || 'assets/default-product.png'}" alt="${p.name}">
+    <h3>${escapeHtml(p.name)}</h3>
+    <p><strong>💰 ${Number(p.price).toFixed(2)}€</strong></p>
+    <p>👤 ${escapeHtml(p.seller)}</p>
+    <p>${p.achievement ? escapeHtml(p.achievement) : ''}</p>
+  `;
+  return div;
+}
+
+// Evita inyección básica
 function escapeHtml(text) {
   if (!text && text !== 0) return '';
   return String(text)
@@ -6,23 +21,7 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;');
 }
 
-// Crear tarjeta de producto minimalista
-function createProductCard(p) {
-  const div = document.createElement('div');
-  div.className = 'product';
-  div.innerHTML = `
-    <img src="${p.image || 'assets/default-product.png'}" alt="${escapeHtml(p.name)}">
-    <h3>💰 ${Number(p.price).toFixed(2)}€</h3>
-  `;
-
-  div.addEventListener('click', () => {
-    openModal(p);
-  });
-
-  return div;
-}
-
-// Cargar productos desde JSON y localStorage
+// Cargar productos iniciales desde JSON y localStorage
 async function loadProducts() {
   const container = document.getElementById('product-list');
   container.innerHTML = '<p>Cargando productos...</p>';
@@ -31,48 +30,62 @@ async function loadProducts() {
   try {
     const res = await fetch('data/products.json');
     initial = await res.json();
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error('No se pudo cargar data/products.json', err);
+  }
 
+  // Productos guardados en localStorage
+  const localKey = 'localundertake_products';
   let localProducts = [];
   try {
-    const raw = localStorage.getItem('localundertake_products');
+    const raw = localStorage.getItem(localKey);
     if (raw) localProducts = JSON.parse(raw);
-  } catch (err) {}
+  } catch (err) {
+    console.error('Error leyendo localStorage', err);
+  }
 
-  const allProducts = [...localProducts, ...initial];
+  // Fusionar: local arriba del JSON para ver los añadidos primero
+  const all = [].concat(localProducts, initial);
 
+  // Mostrar
   container.innerHTML = '';
-  allProducts.forEach(p => container.appendChild(createProductCard(p)));
+  all.forEach(p => {
+    const card = createProductCard(p);
+    container.appendChild(card);
+  });
 }
 
-// Añadir producto local
+// Añadir nuevo producto al localStorage y refrescar UI
 function addLocalProduct(product) {
-  const key = 'localundertake_products';
-  let items = [];
+  const localKey = 'localundertake_products';
+  let localProducts = [];
   try {
-    const raw = localStorage.getItem(key);
-    if (raw) items = JSON.parse(raw);
-  } catch (err) {}
+    const raw = localStorage.getItem(localKey);
+    if (raw) localProducts = JSON.parse(raw);
+  } catch (err) {
+    console.error('Error leyendo localStorage', err);
+  }
 
-  items.unshift(product);
-  localStorage.setItem(key, JSON.stringify(items));
+  // Añadir al inicio
+  localProducts.unshift(product);
+  localStorage.setItem(localKey, JSON.stringify(localProducts));
   loadProducts();
 }
 
-// Borrar productos locales
+// Borrar productos locales (solo para pruebas)
 function clearLocalProducts() {
-  if (confirm('¿Borrar todos los productos añadidos localmente?')) {
+  if (confirm('Borrar todos los productos añadidos localmente?')) {
     localStorage.removeItem('localundertake_products');
     loadProducts();
   }
 }
 
-// CONFIGURAR FORMULARIO
+// Manejar el formulario
 function setupForm() {
   const form = document.getElementById('add-product-form');
   const btnClear = document.getElementById('clear-local');
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('product-name').value.trim();
     const price = Number(document.getElementById('product-price').value || 0);
@@ -93,19 +106,18 @@ function setupForm() {
     };
 
     addLocalProduct(product);
+
+    // limpiar
     form.reset();
   });
 
-  btnClear.addEventListener('click', clearLocalProducts);
+  btnClear.addEventListener('click', (e) => {
+    clearLocalProducts();
+  });
 }
 
-// MODAL
-function openModal(product) {
-  const modal = document.getElementById('product-modal');
-  const modalBody = document.getElementById('modal-body');
-
-  modalBody.innerHTML = `
-    <h2>${escapeHtml(product.name)}</h2>
-    <img src="${product.image || 'assets/default-product.png'}" alt="${escapeHtml(product.name)}">
-    <p><strong>💰 Precio:</strong> ${product.price}€</p>
-    <p><strong>👤 Vendedor:</strong> ${escape
+// Inicializar
+document.addEventListener('DOMContentLoaded', () => {
+  setupForm();
+  loadProducts();
+});
