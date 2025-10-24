@@ -1,4 +1,3 @@
-// Helper: escapar HTML básico
 function escapeHtml(text) {
   if (!text && text !== 0) return '';
   return String(text)
@@ -7,23 +6,17 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;');
 }
 
-// Crea una tarjeta de producto (con detalles ocultos)
+// Crear tarjeta de producto minimalista
 function createProductCard(p) {
   const div = document.createElement('div');
   div.className = 'product';
   div.innerHTML = `
     <img src="${p.image || 'assets/default-product.png'}" alt="${escapeHtml(p.name)}">
-    <h3>${escapeHtml(p.name)}</h3>
-    <div class="product-details">
-      <p><strong>💰 ${Number(p.price).toFixed(2)}€</strong></p>
-      <p>👤 ${escapeHtml(p.seller)}</p>
-      ${p.achievement ? `<p>${escapeHtml(p.achievement)}</p>` : ''}
-    </div>
+    <h3>💰 ${Number(p.price).toFixed(2)}€</h3>
   `;
 
-  // Evento: al hacer clic, mostrar/ocultar detalles
   div.addEventListener('click', () => {
-    div.classList.toggle('active');
+    openModal(p);
   });
 
   return div;
@@ -38,15 +31,81 @@ async function loadProducts() {
   try {
     const res = await fetch('data/products.json');
     initial = await res.json();
-  } catch (err) {
-    console.error('Error al cargar products.json', err);
-  }
+  } catch (err) { console.error(err); }
 
-  const localKey = 'localundertake_products';
   let localProducts = [];
   try {
-    const raw = localStorage.getItem(localKey);
+    const raw = localStorage.getItem('localundertake_products');
     if (raw) localProducts = JSON.parse(raw);
-  } catch (err) {
-    console.error('Error leyendo localStorage', err);
+  } catch (err) {}
+
+  const allProducts = [...localProducts, ...initial];
+
+  container.innerHTML = '';
+  allProducts.forEach(p => container.appendChild(createProductCard(p)));
+}
+
+// Añadir producto local
+function addLocalProduct(product) {
+  const key = 'localundertake_products';
+  let items = [];
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) items = JSON.parse(raw);
+  } catch (err) {}
+
+  items.unshift(product);
+  localStorage.setItem(key, JSON.stringify(items));
+  loadProducts();
+}
+
+// Borrar productos locales
+function clearLocalProducts() {
+  if (confirm('¿Borrar todos los productos añadidos localmente?')) {
+    localStorage.removeItem('localundertake_products');
+    loadProducts();
   }
+}
+
+// CONFIGURAR FORMULARIO
+function setupForm() {
+  const form = document.getElementById('add-product-form');
+  const btnClear = document.getElementById('clear-local');
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('product-name').value.trim();
+    const price = Number(document.getElementById('product-price').value || 0);
+    const seller = document.getElementById('product-seller').value.trim();
+    const image = document.getElementById('product-image').value.trim();
+
+    if (!name || !seller || isNaN(price)) {
+      alert('Rellena nombre, vendedor y precio válidos.');
+      return;
+    }
+
+    const product = {
+      name,
+      price,
+      seller,
+      image: image || null,
+      achievement: '🆕 Añadido localmente'
+    };
+
+    addLocalProduct(product);
+    form.reset();
+  });
+
+  btnClear.addEventListener('click', clearLocalProducts);
+}
+
+// MODAL
+function openModal(product) {
+  const modal = document.getElementById('product-modal');
+  const modalBody = document.getElementById('modal-body');
+
+  modalBody.innerHTML = `
+    <h2>${escapeHtml(product.name)}</h2>
+    <img src="${product.image || 'assets/default-product.png'}" alt="${escapeHtml(product.name)}">
+    <p><strong>💰 Precio:</strong> ${product.price}€</p>
+    <p><strong>👤 Vendedor:</strong> ${escape
