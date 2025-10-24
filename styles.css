@@ -6,6 +6,7 @@ body {
   text-align: center;
 }
 
+/* CABECERA */
 header {
   background: linear-gradient(90deg, #0059ff, #00b7ff);
   color: white;
@@ -18,30 +19,83 @@ h1 {
   font-size: 2rem;
 }
 
-main {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: 2rem;
+/* FORMULARIO */
+#add-product-section {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  margin: 1.5rem auto;
+  padding: 1rem;
+  width: 95%;
+  max-width: 800px;
 }
 
+#add-product-form input,
+#add-product-form button {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+#add-product-form button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+#add-product-form button:hover {
+  background-color: #0056b3;
+}
+
+/* LISTA DE PRODUCTOS */
+#product-list {
+  display: flex;
+  flex-direction: column; /* 👈 hace que los productos se apilen uno debajo del otro */
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* TARJETA DE PRODUCTO */
 .product {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  width: 220px;
-  margin: 1rem;
+  width: 95%;
+  max-width: 500px;
   padding: 1rem;
-  transition: transform 0.2s ease;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .product:hover {
-  transform: translateY(-4px);
+  transform: scale(1.01);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
 .product img {
   width: 100%;
   border-radius: 12px;
+  max-height: 300px;
+  object-fit: cover;
+}
+
+.product h3 {
+  margin: 0.5rem 0;
+}
+
+/* DETALLES OCULTOS */
+.product-details {
+  display: none;
+  margin-top: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.product.active .product-details {
+  display: block; /* 👈 cuando se hace clic, aparece */
 }
 
 footer {
@@ -49,3 +103,5 @@ footer {
   color: #333;
   padding: 1rem;
   font-size: 0.9rem;
+}
+
