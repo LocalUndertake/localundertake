@@ -1,4 +1,3 @@
-/* GENERAL */
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #f8f9fa;
@@ -7,7 +6,6 @@ body {
   text-align: center;
 }
 
-/* CABECERA */
 header {
   background: linear-gradient(90deg, #0059ff, #00b7ff);
   color: white;
@@ -20,120 +18,84 @@ h1 {
   font-size: 2rem;
 }
 
-/* FORMULARIO */
-#add-product-section {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  margin: 1.5rem auto;
-  padding: 1rem;
-  width: 95%;
-  max-width: 800px;
+main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 2rem;
 }
 
-#add-product-form input,
-#add-product-form button {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 8px;
-  margin: 4px 2px;
-}
-
-#add-product-form button {
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.2s ease;
-}
-
-#add-product-form button:hover {
-  background-color: #0056b3;
-}
-
-/* LISTA DE PRODUCTOS EN GRID */
-#product-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
-  justify-items: center;
-}
-
-/* TARJETAS DE PRODUCTO */
 .product {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  width: 95%;
-  max-width: 250px;
+  width: 220px;
+  margin: 1rem;
   padding: 1rem;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .product:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
 }
 
 .product img {
   width: 100%;
   border-radius: 12px;
-  max-height: 220px;
-  object-fit: cover;
 }
 
-.product h3 {
-  margin: 0.5rem 0;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-/* MODAL */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.6);
-}
-
-.modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 90%;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-#modal-close {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 24px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-#modal-body img {
-  width: 100%;
-  border-radius: 12px;
-  margin-bottom: 12px;
-}
-
-/* FOOTER */
 footer {
   background: #e9ecef;
   color: #333;
   padding: 1rem;
   font-size: 0.9rem;
 }
+
+Data[
+  {
+    "name": "Pulsera artesanal",
+    "price": 8,
+    "seller": "Luna Creaciones",
+    "image": "https://via.placeholder.com/200",
+    "achievement": "🏅 Nuevo vendedor"
+  },
+  {
+    "name": "Gorra personalizada",
+    "price": 15,
+    "seller": "StreetVibes",
+    "image": "https://via.placeholder.com/200",
+    "achievement": "⭐ Producto destacado"
+  },
+  {
+    "name": "Taza con diseño propio",
+    "price": 10,
+    "seller": "ArteTaza",
+    "image": "https://via.placeholder.com/200",
+    "achievement": "💎 Diseñador creativo"
+  }
+]
+
+Js
+fetch('data/products.json')
+  .then(response => response.json())
+  .then(products => {
+    const container = document.getElementById('product-list');
+    container.innerHTML = ""; // Limpia el texto "Cargando..."
+
+    products.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'product';
+      div.innerHTML = `
+        <img src="${p.image}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <p><strong>💰 ${p.price}€</strong></p>
+        <p>👤 ${p.seller}</p>
+        <p>${p.achievement}</p>
+      `;
+      container.appendChild(div);
+    });
+  })
+  .catch(error => {
+    document.getElementById('product-list').innerHTML = "<p>Error al cargar productos 😔</p>";
+    console.error(error);
+  });
