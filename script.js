@@ -1,123 +1,113 @@
-// Helper: crear tarjeta de producto
+function escapeHtml(text) {
+  return text
+    ? String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+    : "";
+}
+
+// Crear tarjeta de producto (estilo Wallapop)
 function createProductCard(p) {
-  const div = document.createElement('div');
-  div.className = 'product';
+  const div = document.createElement("div");
+  div.className = "product";
   div.innerHTML = `
-    <img src="${p.image || 'assets/default-product.png'}" alt="${p.name}">
-    <h3>${escapeHtml(p.name)}</h3>
-    <p><strong>💰 ${Number(p.price).toFixed(2)}€</strong></p>
-    <p>👤 ${escapeHtml(p.seller)}</p>
-    <p>${p.achievement ? escapeHtml(p.achievement) : ''}</p>
+    <img src="${p.image || "assets/default-product.png"}" alt="${escapeHtml(p.name)}">
+    <div class="product-info">
+      <h3>${escapeHtml(p.name)}</h3>
+      <p>${Number(p.price).toFixed(2)}€</p>
+    </div>
   `;
+
+  // Al hacer clic, abrir modal
+  div.addEventListener("click", () => openModal(p));
+
   return div;
 }
 
-// Evita inyección básica
-function escapeHtml(text) {
-  if (!text && text !== 0) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-// Cargar productos iniciales desde JSON y localStorage
+// Cargar productos
 async function loadProducts() {
-  const container = document.getElementById('product-list');
-  container.innerHTML = '<p>Cargando productos...</p>';
+  const container = document.getElementById("product-list");
+  container.innerHTML = "<p>Cargando productos...</p>";
 
-  let initial = [];
   try {
-    const res = await fetch('data/products.json');
-    initial = await res.json();
+    const res = await fetch("data/products.json");
+    const json = await res.json();
+    const local = JSON.parse(localStorage.getItem("localundertake_products") || "[]");
+    const all = [...local, ...json];
+
+    container.innerHTML = "";
+    all.forEach((p) => container.appendChild(createProductCard(p)));
   } catch (err) {
-    console.error('No se pudo cargar data/products.json', err);
+    container.innerHTML = "<p>Error al cargar productos 😔</p>";
   }
-
-  // Productos guardados en localStorage
-  const localKey = 'localundertake_products';
-  let localProducts = [];
-  try {
-    const raw = localStorage.getItem(localKey);
-    if (raw) localProducts = JSON.parse(raw);
-  } catch (err) {
-    console.error('Error leyendo localStorage', err);
-  }
-
-  // Fusionar: local arriba del JSON para ver los añadidos primero
-  const all = [].concat(localProducts, initial);
-
-  // Mostrar
-  container.innerHTML = '';
-  all.forEach(p => {
-    const card = createProductCard(p);
-    container.appendChild(card);
-  });
 }
 
-// Añadir nuevo producto al localStorage y refrescar UI
-function addLocalProduct(product) {
-  const localKey = 'localundertake_products';
-  let localProducts = [];
-  try {
-    const raw = localStorage.getItem(localKey);
-    if (raw) localProducts = JSON.parse(raw);
-  } catch (err) {
-    console.error('Error leyendo localStorage', err);
-  }
+// Modal
+function openModal(p) {
+  const modal = document.getElementById("product-modal");
+  document.getElementById("modal-image").src = p.image || "assets/default-product.png";
+  document.getElementById("modal-name").textContent = p.name;
+  document.getElementById("modal-price").textContent = `💰 ${Number(p.price).toFixed(2)}€`;
+  document.getElementById("modal-seller").textContent = `👤 ${p.seller}`;
+  document.getElementById("modal-achievement").textContent = p.achievement || "";
+  modal.style.display = "flex";
+}
 
-  // Añadir al inicio
-  localProducts.unshift(product);
-  localStorage.setItem(localKey, JSON.stringify(localProducts));
+function closeModal() {
+  document.getElementById("product-modal").style.display = "none";
+}
+
+// Añadir producto localmente
+function addLocalProduct(product) {
+  const key = "localundertake_products";
+  const products = JSON.parse(localStorage.getItem(key) || "[]");
+  products.unshift(product);
+  localStorage.setItem(key, JSON.stringify(products));
   loadProducts();
 }
 
-// Borrar productos locales (solo para pruebas)
+// Limpiar productos locales
 function clearLocalProducts() {
-  if (confirm('Borrar todos los productos añadidos localmente?')) {
-    localStorage.removeItem('localundertake_products');
+  if (confirm("¿Borrar todos los productos añadidos localmente?")) {
+    localStorage.removeItem("localundertake_products");
     loadProducts();
   }
 }
 
-// Manejar el formulario
-function setupForm() {
-  const form = document.getElementById('add-product-form');
-  const btnClear = document.getElementById('clear-local');
+// Configurar formulario y modal
+function setup() {
+  const form = document.getElementById("add-product-form");
+  const btnClear = document.getElementById("clear-local");
+  const closeBtn = document.getElementById("close-modal");
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const name = document.getElementById('product-name').value.trim();
-    const price = Number(document.getElementById('product-price').value || 0);
-    const seller = document.getElementById('product-seller').value.trim();
-    const image = document.getElementById('product-image').value.trim();
+    const name = form["product-name"].value.trim();
+    const price = Number(form["product-price"].value);
+    const seller = form["product-seller"].value.trim();
+    const image = form["product-image"].value.trim();
 
     if (!name || !seller || isNaN(price)) {
-      alert('Rellena nombre, vendedor y precio válidos.');
+      alert("Por favor, completa todos los campos correctamente.");
       return;
     }
 
-    const product = {
-      name,
-      price,
-      seller,
-      image: image || null,
-      achievement: '🆕 Añadido localmente'
-    };
-
+    const product = { name, price, seller, image: image || null, achievement: "🆕 Añadido localmente" };
     addLocalProduct(product);
-
-    // limpiar
     form.reset();
   });
 
-  btnClear.addEventListener('click', (e) => {
-    clearLocalProducts();
+  btnClear.addEventListener("click", clearLocalProducts);
+  closeBtn.addEventListener("click", closeModal);
+
+  window.addEventListener("click", (e) => {
+    if (e.target.id === "product-modal") closeModal();
   });
 }
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', () => {
-  setupForm();
+document.addEventListener("DOMContentLoaded", () => {
+  setup();
   loadProducts();
 });
