@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Pulsera artesanal",
+    "price": 8,
+    "seller": "Luna Creaciones",
+    "image": "https://via.placeholder.com/200",
+    "achievement": "🏅 Nuevo vendedor"
+  },
+  {
+    "name": "Gorra personalizada",
+    "price": 15,
+    "seller": "StreetVibes",
+    "image": "https://via.placeholder.com/200",
+    "achievement": "⭐ Producto destacado"
+  },
+  {
+    "name": "Taza con diseño propio",
+    "price": 10,
+    "seller": "ArteTaza",
+    "image": "https://via.placeholder.com/200",
+    "achievement": "💎 Diseñador creativo"
+  }
+]
