@@ -7,7 +7,7 @@ function escapeHtml(text) {
     : "";
 }
 
-// Crear tarjeta de producto (estilo Wallapop)
+// Crear tarjeta de producto tipo marketplace
 function createProductCard(p) {
   const div = document.createElement("div");
   div.className = "product";
@@ -18,10 +18,7 @@ function createProductCard(p) {
       <p>${Number(p.price).toFixed(2)}€</p>
     </div>
   `;
-
-  // Al hacer clic, abrir modal
   div.addEventListener("click", () => openModal(p));
-
   return div;
 }
 
@@ -43,7 +40,7 @@ async function loadProducts() {
   }
 }
 
-// Modal
+// Modal con más información
 function openModal(p) {
   const modal = document.getElementById("product-modal");
   document.getElementById("modal-image").src = p.image || "assets/default-product.png";
@@ -100,7 +97,6 @@ function setup() {
 
   btnClear.addEventListener("click", clearLocalProducts);
   closeBtn.addEventListener("click", closeModal);
-
   window.addEventListener("click", (e) => {
     if (e.target.id === "product-modal") closeModal();
   });
