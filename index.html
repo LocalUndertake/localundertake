@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -12,8 +12,29 @@
     <p>Impulsa tu marca. Conecta con el mundo. 💼</p>
   </header>
 
-  <main id="product-list">
-    <p>Cargando productos...</p>
+  <main>
+    <!-- FORMULARIO PARA AÑADIR PRODUCTOS -->
+    <section id="add-product-section" style="max-width:760px;margin:20px auto;padding:1rem;">
+      <h2>Añadir producto (simulado)</h2>
+      <form id="add-product-form">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <input id="product-name" type="text" placeholder="Nombre del producto" required style="flex:1;min-width:200px;padding:8px">
+          <input id="product-price" type="number" placeholder="Precio (€)" required style="width:120px;padding:8px">
+          <input id="product-seller" type="text" placeholder="Vendedor / Marca" required style="min-width:150px;padding:8px">
+          <input id="product-image" type="url" placeholder="URL imagen (opcional)" style="min-width:200px;padding:8px">
+        </div>
+        <div style="margin-top:8px;">
+          <button type="submit" style="padding:8px 12px;">Añadir producto</button>
+          <button id="clear-local" type="button" style="padding:8px 12px;margin-left:8px;">Borrar productos locales</button>
+        </div>
+        <p style="font-size:0.9rem;color:#555;margin-top:6px;">
+          Los productos añadidos aquí se guardan solo en este navegador (uso para pruebas). Más adelante los guardaremos en la nube.
+        </p>
+      </form>
+    </section>
+
+    <!-- LISTADO DE PRODUCTOS -->
+    <section id="product-list" style="padding:1rem;"></section>
   </main>
 
   <footer>
