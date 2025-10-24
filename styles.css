@@ -1,3 +1,4 @@
+/* GENERAL */
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #f8f9fa;
@@ -34,6 +35,8 @@ h1 {
 #add-product-form button {
   border: 1px solid #ccc;
   border-radius: 8px;
+  padding: 8px;
+  margin: 4px 2px;
 }
 
 #add-product-form button {
@@ -48,22 +51,22 @@ h1 {
   background-color: #0056b3;
 }
 
-/* LISTA DE PRODUCTOS */
+/* LISTA DE PRODUCTOS EN GRID */
 #product-list {
-  display: flex;
-  flex-direction: column; /* 👈 hace que los productos se apilen uno debajo del otro */
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
   padding: 1rem;
+  justify-items: center;
 }
 
-/* TARJETA DE PRODUCTO */
+/* TARJETAS DE PRODUCTO */
 .product {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.1);
   width: 95%;
-  max-width: 500px;
+  max-width: 250px;
   padding: 1rem;
   text-align: center;
   cursor: pointer;
@@ -71,37 +74,66 @@ h1 {
 }
 
 .product:hover {
-  transform: scale(1.01);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .product img {
   width: 100%;
   border-radius: 12px;
-  max-height: 300px;
+  max-height: 220px;
   object-fit: cover;
 }
 
 .product h3 {
   margin: 0.5rem 0;
-}
-
-/* DETALLES OCULTOS */
-.product-details {
-  display: none;
-  margin-top: 0.5rem;
+  font-size: 1.1rem;
   color: #333;
-  font-size: 0.95rem;
 }
 
-.product.active .product-details {
-  display: block; /* 👈 cuando se hace clic, aparece */
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6);
 }
 
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#modal-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#modal-body img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+/* FOOTER */
 footer {
   background: #e9ecef;
   color: #333;
   padding: 1rem;
   font-size: 0.9rem;
 }
-
