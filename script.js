@@ -1,18 +1,18 @@
-/* ===== estado global ===== */
-let allProducts = [];          // array de productos (local + data)
-let sellerProfiles = {};       // perfiles generados
-let currentProfile = null;     // vendedor abierto
+/* ===== Estado global ===== */
+let allProducts = [];          
+let sellerProfiles = {};       
+let currentProfile = null;     
 const LOCAL_PRODUCTS_KEY = "localundertake_products";
 const LOCAL_REVIEWS_KEY = "localundertake_reviews";
 
-/* ===== utilidades ===== */
+/* ===== Utilidades ===== */
 function safeLower(v){ return String(v || "").toLowerCase(); }
 function escapeHtml(t){ return t ? String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
 function dicebearAvatar(seed, size=128){
   return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,89cff0,f0a6ca`;
 }
 
-/* ===== creación tarjetas ===== */
+/* ===== Crear tarjetas de productos ===== */
 function createProductCard(p){
   const div = document.createElement("div");
   div.className = "product";
@@ -26,14 +26,11 @@ function createProductCard(p){
       <p>${Number(p.price).toFixed(2)}€</p>
     </div>
   `;
-  div.addEventListener("click", ()=> {
-    closeProfile(); // 🔹 al abrir un producto, cerrar el perfil si está abierto
-    openModal(p);
-  });
+  div.addEventListener("click", ()=> openModal(p));
   return div;
 }
 
-/* ===== carga inicial ===== */
+/* ===== Carga inicial de productos ===== */
 async function loadProducts(){
   const container = document.getElementById("product-list");
   container.innerHTML = `<p class="placeholder">Cargando productos...</p>`;
@@ -57,7 +54,7 @@ async function loadProducts(){
   }
 }
 
-/* ===== perfiles ===== */
+/* ===== Crear perfiles de vendedores ===== */
 function buildProfiles(){
   sellerProfiles = {};
   allProducts.forEach(p => {
@@ -78,7 +75,7 @@ function buildProfiles(){
   });
 }
 
-/* ===== render + filtros ===== */
+/* ===== Filtrar y renderizar productos ===== */
 function renderFiltered(){
   const q = safeLower(document.getElementById("search-input").value || "");
   const cat = document.getElementById("filter-category").value || "";
@@ -101,10 +98,13 @@ function renderFiltered(){
 
 /* ===== MODAL PRODUCTO ===== */
 function openModal(p){
+  closeProfile(); // 🔧 Cierra el perfil antes de abrir producto
+
   const modal = document.getElementById("product-modal");
   document.getElementById("modal-image").src = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name)}`;
   document.getElementById("modal-name").textContent = p.name;
   document.getElementById("modal-price").textContent = `💰 ${Number(p.price).toFixed(2)}€`;
+  
   const sellerEl = document.getElementById("modal-seller");
   sellerEl.innerHTML = `👤 <a href="#" id="seller-link">${escapeHtml(p.seller)}</a>`;
   sellerEl.querySelector("#seller-link").addEventListener("click", (ev)=>{
@@ -112,6 +112,7 @@ function openModal(p){
     closeModal();
     openProfile(p.seller);
   });
+
   document.getElementById("modal-category").textContent = `📦 ${p.category || "Sin categoría"}`;
   document.getElementById("modal-achievement").textContent = p.achievement || "";
   modal.style.display = "flex";
@@ -123,7 +124,7 @@ function closeModal(){
   modal.setAttribute("aria-hidden","true");
 }
 
-/* ===== PERFIL ===== */
+/* ===== PERFIL DE VENDEDOR ===== */
 function openProfile(sellerName){
   const profile = sellerProfiles[sellerName];
   if(!profile) return;
@@ -148,6 +149,12 @@ function openProfile(sellerName){
   const modal = document.getElementById("profile-modal");
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden","false");
+
+  // 🔧 Scroll completo para toda la ventana del perfil
+  const content = modal.querySelector(".modal-content");
+  content.style.maxHeight = "90vh";
+  content.style.overflowY = "auto";
+  content.style.scrollBehavior = "smooth";
 }
 
 function saveBioForCurrent(){
@@ -213,7 +220,7 @@ function closeProfile(){
   currentProfile = null;
 }
 
-/* ===== añadir producto ===== */
+/* ===== Añadir producto local ===== */
 function addLocalProduct(p){
   const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
   const normalized = {
@@ -235,7 +242,7 @@ function clearLocalProducts(){
   loadProducts();
 }
 
-/* ===== setup ===== */
+/* ===== Inicialización ===== */
 function setup(){
   const form = document.getElementById("add-product-form");
   form.addEventListener("submit", (e)=>{
@@ -250,6 +257,7 @@ function setup(){
     }
     addLocalProduct({ name, price, seller, category, image: image || null, achievement: "🆕 Añadido localmente" });
     form.reset();
+    document.getElementById("filter-category").value = "";
   });
 
   document.getElementById("clear-local").addEventListener("click", clearLocalProducts);
@@ -271,7 +279,7 @@ function setup(){
   document.getElementById("clear-reviews").addEventListener("click", clearReviewsForCurrent);
 }
 
-/* ===== iniciar ===== */
+/* ===== Arranque ===== */
 document.addEventListener("DOMContentLoaded", ()=>{
   setup();
   loadProducts();
