@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LocalUndertake</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
     <!-- FORMULARIO -->
     <section id="add-product-section" class="form-section">
       <h2>🛍️ Añadir producto (modo local)</h2>
-      <form id="add-product-form" class="card-form">
+      <form id="add-product-form">
         <div class="form-grid">
           <input id="product-name" name="product-name" type="text" placeholder="Nombre del producto" required>
           <input id="product-price" name="product-price" type="number" placeholder="Precio (€)" required>
@@ -33,53 +33,54 @@
           </select>
           <input id="product-image" name="product-image" type="url" placeholder="URL de imagen (opcional)">
         </div>
-
         <div class="form-buttons">
-          <button type="submit" class="primary">Añadir producto</button>
+          <button type="submit">Añadir producto</button>
           <button id="clear-local" type="button" class="danger">Borrar productos locales</button>
         </div>
-        <p class="note">💡 Los productos se guardan solo en tu navegador por ahora.</p>
       </form>
+      <p class="note">💡 Los productos se guardan solo en tu navegador por ahora.</p>
     </section>
 
-    <!-- BARRA DE BUSQUEDA CENTRADA Y ATRACTIVA -->
-    <section id="search-section" class="search-section">
-      <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20l-6-6zM4 9.5A5.5 5.5 0 1 1 9.5 15 5.5 5.5 0 0 1 4 9.5z"/></svg>
-        <input id="search-input" type="search" placeholder="Buscar por nombre o vendedor..." aria-label="Buscar productos">
-        <select id="filter-category" aria-label="Filtrar por categoría">
-          <option value="">Todas las categorías</option>
-          <option>Accesorios</option>
-          <option>Ropa</option>
-          <option>Hogar</option>
-          <option>Arte</option>
-          <option>Tecnología</option>
-          <option>Otros</option>
-        </select>
+    <!-- BARRA DE BUSQUEDA (centrada y atractiva) -->
+    <section id="search-wrapper">
+      <div class="search-card">
+        <div class="search-left">
+          <svg class="icon-search" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM10 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+          </svg>
+          <input id="search-input" type="text" placeholder="Buscar por nombre, vendedor o categoría..." aria-label="Buscar productos">
+        </div>
+        <div class="search-right">
+          <select id="filter-category" aria-label="Filtrar por categoría">
+            <option value="">Todas las categorías</option>
+            <option>Accesorios</option>
+            <option>Ropa</option>
+            <option>Hogar</option>
+            <option>Arte</option>
+            <option>Tecnología</option>
+            <option>Otros</option>
+          </select>
+        </div>
       </div>
     </section>
 
-    <!-- GRID DE PRODUCTOS (llena todo el ancho) -->
-    <section id="product-list" class="product-grid" aria-live="polite">
+    <!-- GRID DE PRODUCTOS -->
+    <section id="product-list" class="product-grid">
       <p>Cargando productos...</p>
     </section>
   </main>
 
-  <!-- MODAL CON DETALLES -->
-  <div id="product-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal-content">
-      <button id="close-modal" class="modal-close" aria-label="Cerrar">&times;</button>
+  <!-- MODAL -->
+  <div id="product-modal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <button id="close-modal" class="modal-close" aria-label="Cerrar modal">&times;</button>
       <img id="modal-image" src="" alt="">
       <div class="modal-body">
         <h3 id="modal-name"></h3>
         <p id="modal-price"></p>
         <p id="modal-seller"></p>
         <p id="modal-category"></p>
-        <p id="modal-achievement" class="achievement"></p>
-        <!-- botón de contacto de ejemplo (puedes enlazar WhatsApp, correo, etc.) -->
-        <div class="modal-actions">
-          <button id="contact-seller" class="primary">Contactar al vendedor</button>
-        </div>
+        <p id="modal-achievement"></p>
       </div>
     </div>
   </div>
