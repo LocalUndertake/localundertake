@@ -1,19 +1,18 @@
 // ==============================
-// Modal de producto
+// Referencias a modales
 // ==============================
 const modal = document.getElementById('product-modal');
 const modalContent = document.getElementById('modal-content');
 const closeModal = document.getElementById('close-modal');
 
-// ==============================
-// Modal de perfil
-// ==============================
 const profileModal = document.getElementById('profile-modal');
 const profileContent = document.getElementById('profile-content');
 const closeProfileModal = document.getElementById('close-profile-modal');
 
+let allProducts = [];
+
 // ==============================
-// Función: Crear tarjeta producto
+// Crear tarjeta de producto
 // ==============================
 function createProductCard(p) {
   const div = document.createElement('div');
@@ -24,14 +23,17 @@ function createProductCard(p) {
     <p><strong>${Number(p.price).toFixed(2)}€</strong></p>
     <p class="seller" data-seller="${p.seller}">👤 ${p.seller}</p>
   `;
-  // Click en imagen → abre modal de producto
+
+  // Click en imagen → abrir modal producto
   div.querySelector('img').addEventListener('click', () => {
     openProductModal(p);
   });
-  // Click en vendedor → abre perfil
+
+  // Click en vendedor → abrir perfil
   div.querySelector('.seller').addEventListener('click', () => {
     openProfileModal(p.seller);
   });
+
   return div;
 }
 
@@ -39,7 +41,7 @@ function createProductCard(p) {
 // Abrir modal de producto
 // ==============================
 function openProductModal(p) {
-  // Cierra modal de perfil si está abierto
+  // 🔸 Cerrar perfil si está abierto
   if (profileModal.classList.contains('active')) {
     profileModal.classList.remove('active');
   }
@@ -55,7 +57,9 @@ function openProductModal(p) {
   modal.classList.add('active');
 }
 
-closeModal.addEventListener('click', () => modal.classList.remove('active'));
+closeModal.addEventListener('click', () => {
+  modal.classList.remove('active');
+});
 
 // ==============================
 // Abrir modal de perfil
@@ -64,16 +68,16 @@ function openProfileModal(sellerName) {
   profileContent.innerHTML = `<h2>👤 ${sellerName}</h2><p>Cargando productos...</p>`;
   profileModal.classList.add('active');
 
-  // Permitir scroll si hay muchos productos
+  // 🔹 Hacer scroll posible dentro del modal
   profileContent.style.overflowY = 'auto';
   profileContent.style.maxHeight = '80vh';
 
-  // Filtra productos de ese vendedor
   const sellerProducts = allProducts.filter(p => p.seller === sellerName);
   profileContent.innerHTML = `
     <h2>👤 ${sellerName}</h2>
     <div class="profile-products"></div>
   `;
+
   const container = profileContent.querySelector('.profile-products');
   sellerProducts.forEach(p => {
     const div = document.createElement('div');
@@ -83,7 +87,7 @@ function openProfileModal(sellerName) {
       <h4>${p.name}</h4>
       <p>${Number(p.price).toFixed(2)}€</p>
     `;
-    // Clic en producto del perfil → abrir modal de producto y cerrar perfil
+    // 🔸 Al hacer clic en producto del perfil → cerrar perfil y abrir modal producto
     div.querySelector('img').addEventListener('click', () => {
       profileModal.classList.remove('active');
       openProductModal(p);
@@ -97,18 +101,20 @@ closeProfileModal.addEventListener('click', () => {
 });
 
 // ==============================
-// Variables globales y carga
+// Cargar productos
 // ==============================
-let allProducts = [];
-
 async function loadProducts() {
-  const res = await fetch('data/products.json');
-  allProducts = await res.json();
-  renderFiltered(allProducts);
+  try {
+    const res = await fetch('data/products.json');
+    allProducts = await res.json();
+    renderFiltered(allProducts);
+  } catch (err) {
+    console.error('Error al cargar productos:', err);
+  }
 }
 
 // ==============================
-// Renderizado filtrado (búsqueda / categoría)
+// Renderizado filtrado
 // ==============================
 function renderFiltered(list) {
   const container = document.getElementById('product-list');
