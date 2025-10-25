@@ -22,6 +22,15 @@
           <input id="product-name" type="text" placeholder="Nombre del producto" required>
           <input id="product-price" type="number" placeholder="Precio (€)" required>
           <input id="product-seller" type="text" placeholder="Vendedor / Marca" required>
+          <select id="product-category" required>
+            <option value="">Selecciona categoría</option>
+            <option>Accesorios</option>
+            <option>Ropa</option>
+            <option>Hogar</option>
+            <option>Arte</option>
+            <option>Tecnología</option>
+            <option>Otros</option>
+          </select>
           <input id="product-image" type="url" placeholder="URL de imagen (opcional)">
         </div>
         <div class="form-buttons">
@@ -29,9 +38,21 @@
           <button id="clear-local" type="button" class="danger">Borrar productos locales</button>
         </div>
       </form>
-      <p class="note">
-        💡 Los productos se guardan solo en tu navegador por ahora.
-      </p>
+      <p class="note">💡 Los productos se guardan solo en tu navegador por ahora.</p>
+    </section>
+
+    <!-- BARRA DE BUSQUEDA -->
+    <section id="search-section">
+      <input type="text" id="search-input" placeholder="🔍 Buscar por nombre o vendedor...">
+      <select id="filter-category">
+        <option value="">Todas las categorías</option>
+        <option>Accesorios</option>
+        <option>Ropa</option>
+        <option>Hogar</option>
+        <option>Arte</option>
+        <option>Tecnología</option>
+        <option>Otros</option>
+      </select>
     </section>
 
     <!-- GRID DE PRODUCTOS -->
@@ -40,7 +61,7 @@
     </section>
   </main>
 
-  <!-- MODAL DE DETALLES -->
+  <!-- MODAL -->
   <div id="product-modal" class="modal">
     <div class="modal-content">
       <span id="close-modal">&times;</span>
@@ -48,6 +69,7 @@
       <h3 id="modal-name"></h3>
       <p id="modal-price"></p>
       <p id="modal-seller"></p>
+      <p id="modal-category"></p>
       <p id="modal-achievement"></p>
     </div>
   </div>
