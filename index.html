@@ -32,9 +32,13 @@
           <option>Tecnología</option>
           <option>Otros</option>
         </select>
-        <input id="product-image" type="url" placeholder="URL de imagen (opcional)">
-        <!-- 🔹 Nuevo campo: Descripción -->
-        <input id="product-description" type="text" placeholder="Descripción (opcional)">
+
+        <!-- 🔹 NUEVO: Campo URL y Descripción en la misma fila -->
+        <div style="display:flex; gap:8px; width:100%;">
+          <input id="product-image" type="url" placeholder="URL de imagen (opcional)" style="flex:1;">
+          <input id="product-description" type="text" placeholder="Descripción (opcional)" style="flex:1;">
+        </div>
+
         <div class="form-actions">
           <button type="submit">Añadir producto</button>
           <button id="clear-local" type="button" class="danger">Borrar productos locales</button>
@@ -47,11 +51,7 @@
       <div class="search-card">
         <div class="search-left">
           <svg class="icon-search" viewBox="0 0 24 24"><path fill="currentColor"
-            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 
-            6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 
-            4.23-1.57l.27.28v.79l5 5L20.49 
-            19l-5-5zM10 15a5 5 0 1 1 0-10 
-            5 5 0 0 1 0 10z"/></svg>
+            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 5L20.49 19l-5-5zM10 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
           <input id="search-input" type="text" placeholder="Buscar por nombre, vendedor o categoría...">
         </div>
         <div class="search-right">
@@ -83,13 +83,13 @@
         <p id="modal-price"></p>
         <p id="modal-seller"></p>
         <p id="modal-category"></p>
-        <!-- 🔹 Mostrar descripción -->
-        <p id="modal-description"></p>
+        <!-- 🔹 NUEVO: descripción debajo -->
+        <p id="modal-description" style="margin-top:8px; font-size:0.95rem; color:#444;"></p>
       </div>
     </div>
   </div>
 
-  <!-- MODAL PERFIL VENDEDOR -->
+  <!-- MODAL PERFIL -->
   <div id="profile-modal" class="modal" aria-hidden="true">
     <div class="modal-content profile-content">
       <button id="close-profile" class="modal-close">&times;</button>
@@ -132,7 +132,7 @@
     </div>
   </div>
 
-  <!-- MODAL PERFIL DEL USUARIO (ICONO ESQUINA) -->
+  <!-- MODAL PERFIL DE USUARIO -->
   <div id="user-modal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button id="close-user-modal" class="modal-close">&times;</button>
