@@ -1,140 +1,153 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Local Undertake</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LocalUndertake — Marketplace local</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <header>
     <div class="header-inner">
-      <h1>Local Undertake</h1>
-      <p>Descubre y publica productos locales</p>
+      <h1>🌍 LocalUndertake</h1>
+      <p>Encuentra y apoya negocios locales — descubre productos únicos.</p>
     </div>
-    <div id="user-profile-icon" class="user-profile-icon"></div>
+    <div id="user-profile-icon" class="user-profile-icon" title="Tu perfil"></div>
   </header>
 
-  <section class="form-section">
-    <h2>Publicar nuevo producto</h2>
-    <form id="add-product-form" class="form-grid">
-      <input type="text" id="product-name" placeholder="Nombre del producto" required />
-      <input type="number" id="product-price" placeholder="Precio (€)" required step="0.01" />
-      <input type="text" id="product-seller" placeholder="Tu nombre o tienda" required />
-      <select id="product-category" required>
-        <option value="">Selecciona categoría</option>
-        <option value="Artesanía">Artesanía</option>
-        <option value="Comida">Comida</option>
-        <option value="Ropa">Ropa</option>
-        <option value="Tecnología">Tecnología</option>
-        <option value="Otros">Otros</option>
-      </select>
+  <main>
+    <section id="add-product-section" class="form-section">
+      <h2>➕ Añadir producto (modo local)</h2>
+      <form id="add-product-form" class="form-grid">
+        <input id="product-name" type="text" placeholder="Nombre del producto" required>
+        <input id="product-price" type="number" placeholder="Precio (€)" required>
+        <input id="product-seller" type="text" placeholder="Vendedor / Marca" required>
+        <select id="product-category" required>
+          <option value="">Selecciona categoría</option>
+          <option>Accesorios</option>
+          <option>Ropa</option>
+          <option>Hogar</option>
+          <option>Arte</option>
+          <option>Tecnología</option>
+          <option>Otros</option>
+        </select>
+        <input id="product-image" type="url" placeholder="URL de imagen (opcional)">
+        <!-- 🔹 Nuevo campo: Descripción -->
+        <input id="product-description" type="text" placeholder="Descripción (opcional)">
+        <div class="form-actions">
+          <button type="submit">Añadir producto</button>
+          <button id="clear-local" type="button" class="danger">Borrar productos locales</button>
+        </div>
+      </form>
+      <p class="note">💡 Los productos se guardan solo en tu navegador (localStorage).</p>
+    </section>
 
-      <!-- 🔹 NUEVOS CAMPOS: URL de imagen y descripción (al lado) -->
-      <input type="url" id="product-image" placeholder="URL de imagen (opcional)" />
-      <input type="text" id="product-description" placeholder="Descripción del producto (opcional)" />
-
-      <div class="form-actions">
-        <button type="submit">Agregar producto</button>
-        <button type="button" id="clear-local" class="danger">Borrar todo</button>
+    <section id="search-wrapper" class="search-wrapper">
+      <div class="search-card">
+        <div class="search-left">
+          <svg class="icon-search" viewBox="0 0 24 24"><path fill="currentColor"
+            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 
+            6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 
+            4.23-1.57l.27.28v.79l5 5L20.49 
+            19l-5-5zM10 15a5 5 0 1 1 0-10 
+            5 5 0 0 1 0 10z"/></svg>
+          <input id="search-input" type="text" placeholder="Buscar por nombre, vendedor o categoría...">
+        </div>
+        <div class="search-right">
+          <select id="filter-category">
+            <option value="">Todas las categorías</option>
+            <option>Accesorios</option>
+            <option>Ropa</option>
+            <option>Hogar</option>
+            <option>Arte</option>
+            <option>Tecnología</option>
+            <option>Otros</option>
+          </select>
+        </div>
       </div>
-    </form>
-  </section>
+    </section>
 
-  <div class="search-wrapper">
-    <div class="search-card">
-      <div class="search-left">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon-search" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 3.5a7.5 7.5 0 0013.15 13.15z" />
-        </svg>
-        <input type="text" id="search-input" placeholder="Buscar productos..." />
-      </div>
-      <select id="filter-category">
-        <option value="">Todas las categorías</option>
-        <option value="Artesanía">Artesanía</option>
-        <option value="Comida">Comida</option>
-        <option value="Ropa">Ropa</option>
-        <option value="Tecnología">Tecnología</option>
-        <option value="Otros">Otros</option>
-      </select>
-    </div>
-  </div>
+    <section id="product-list" class="product-grid">
+      <p class="placeholder">Cargando productos...</p>
+    </section>
+  </main>
 
-  <section id="product-list" class="product-grid"></section>
-
-  <!-- === MODAL PRODUCTO === -->
-  <div id="product-modal" class="modal">
+  <!-- MODAL PRODUCTO -->
+  <div id="product-modal" class="modal" aria-hidden="true">
     <div class="modal-content">
-      <button id="close-modal" class="modal-close">✖</button>
-      <img id="modal-image" src="" alt="Producto" />
+      <button id="close-modal" class="modal-close">&times;</button>
+      <img id="modal-image" src="" alt="Imagen del producto">
       <div class="modal-body">
         <h3 id="modal-name"></h3>
         <p id="modal-price"></p>
         <p id="modal-seller"></p>
         <p id="modal-category"></p>
-        <!-- 🔹 NUEVO: descripción debajo -->
-        <p id="modal-description" style="margin-top:10px; color:#444;"></p>
+        <!-- 🔹 Mostrar descripción -->
+        <p id="modal-description"></p>
       </div>
     </div>
   </div>
 
-  <!-- === MODAL PERFIL DE VENDEDOR === -->
-  <div id="profile-modal" class="modal">
+  <!-- MODAL PERFIL VENDEDOR -->
+  <div id="profile-modal" class="modal" aria-hidden="true">
     <div class="modal-content profile-content">
-      <button id="close-profile" class="modal-close">✖</button>
+      <button id="close-profile" class="modal-close">&times;</button>
       <div class="profile-header">
-        <img id="profile-avatar" class="profile-avatar" src="" alt="Avatar vendedor" />
+        <img id="profile-avatar" class="profile-avatar" src="" alt="Avatar vendedor">
         <div class="profile-info">
           <h3 id="profile-name"></h3>
-          <textarea id="profile-bio" class="profile-bio" placeholder="Escribe una biografía..."></textarea>
+          <textarea id="profile-bio" class="profile-bio" rows="2"></textarea>
           <div class="profile-actions">
-            <button id="save-bio" class="small">Guardar biografía</button>
+            <button id="save-bio" class="small">Guardar bio</button>
+            <button id="contact-seller" class="small">Contactar (WhatsApp)</button>
           </div>
         </div>
       </div>
       <div class="profile-body">
-        <h3>Productos de <span id="profile-name-2"></span></h3>
-        <div id="profile-products" class="product-grid" style="max-height:400px; overflow-y:auto;"></div>
-
+        <h4>Productos de <span id="profile-name-2"></span></h4>
+        <div id="profile-products" class="product-grid profile-grid"></div>
+        <hr>
         <div class="reviews-section">
-          <h3>Reseñas</h3>
+          <h4>Reseñas</h4>
           <div id="reviews-list"></div>
           <form id="add-review-form" class="review-form">
-            <input type="text" id="reviewer-name" placeholder="Tu nombre" required />
+            <input id="reviewer-name" type="text" placeholder="Tu nombre" required>
             <select id="review-rating" required>
-              <option value="">⭐ Puntuación</option>
-              <option value="1">★☆☆☆☆</option>
-              <option value="2">★★☆☆☆</option>
-              <option value="3">★★★☆☆</option>
-              <option value="4">★★★★☆</option>
-              <option value="5">★★★★★</option>
+              <option value="">Puntuación</option>
+              <option value="5">5 — Excelente</option>
+              <option value="4">4 — Muy bueno</option>
+              <option value="3">3 — Bien</option>
+              <option value="2">2 — Regular</option>
+              <option value="1">1 — Malo</option>
             </select>
-            <textarea id="review-text" placeholder="Escribe una reseña..." required></textarea>
-            <button type="submit" class="small">Publicar reseña</button>
-            <button type="button" id="clear-reviews" class="small danger">Borrar reseñas</button>
+            <textarea id="review-text" rows="2" placeholder="Tu comentario" required></textarea>
+            <div style="display:flex;gap:8px;">
+              <button type="submit">Enviar reseña</button>
+              <button id="clear-reviews" type="button" class="danger small">Borrar reseñas</button>
+            </div>
           </form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- === MODAL PERFIL DE USUARIO LOCAL (ICONO ESQUINA) === -->
-  <div id="user-modal" class="modal">
+  <!-- MODAL PERFIL DEL USUARIO (ICONO ESQUINA) -->
+  <div id="user-modal" class="modal" aria-hidden="true">
     <div class="modal-content">
-      <button id="close-user-modal" class="modal-close">✖</button>
+      <button id="close-user-modal" class="modal-close">&times;</button>
       <div class="modal-body">
-        <h3>Tu perfil</h3>
-        <input type="text" id="user-name" placeholder="Tu nombre" required />
-        <input type="url" id="user-avatar" placeholder="URL de tu foto (opcional)" />
-        <textarea id="user-bio" placeholder="Tu biografía..."></textarea>
-        <button id="save-user-profile">Guardar perfil</button>
+        <h3>👤 Tu perfil</h3>
+        <input id="user-name" type="text" placeholder="Tu nombre o marca" required style="margin-top:8px;">
+        <textarea id="user-bio" rows="2" placeholder="Cuéntanos algo sobre ti..." style="margin-top:8px;"></textarea>
+        <input id="user-avatar" type="url" placeholder="URL de tu foto o logo (opcional)" style="margin-top:8px;">
+        <button id="save-user-profile" style="margin-top:10px;">Guardar perfil</button>
       </div>
     </div>
   </div>
 
   <footer>
-    <p>© 2025 Local Undertake. Todos los derechos reservados.</p>
+    <p>© 2025 LocalUndertake — Comunidad de Emprendedores 🚀</p>
   </footer>
 
   <script src="script.js"></script>
