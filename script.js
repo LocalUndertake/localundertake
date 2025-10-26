@@ -1,291 +1,203 @@
-/* ===== Estado global ===== */
-let allProducts = [];
-let sellerProfiles = {};
-let currentProfile = null;
-const LOCAL_PRODUCTS_KEY = "localundertake_products";
-const LOCAL_REVIEWS_KEY = "localundertake_reviews";
+// --- VARIABLES GLOBALES ---
+const localKey = 'localundertake_products';
+const profileKey = 'localundertake_user';
+let products = [];
+let userProfile = null;
 
-/* ===== Utilidades ===== */
-function safeLower(v){ return String(v || "").toLowerCase(); }
-function escapeHtml(t){ return t ? String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
-function dicebearAvatar(seed){
-  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,89cff0,f0a6ca`;
+// --- FUNCIONES AUXILIARES ---
+function escapeHtml(text) {
+  if (!text && text !== 0) return '';
+  return String(text).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 }
 
-/* ===== Crear tarjeta de producto ===== */
-function createProductCard(p){
-  const div = document.createElement("div");
-  div.className = "product";
-  const image = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name || "Producto")}`;
-  const category = p.category || "Sin categoría";
+function loadUserProfile() {
+  const data = localStorage.getItem(profileKey);
+  if (data) {
+    userProfile = JSON.parse(data);
+  }
+}
+
+function saveUserProfile(profile) {
+  localStorage.setItem(profileKey, JSON.stringify(profile));
+  userProfile = profile;
+}
+
+// --- CREAR TARJETA ---
+function createProductCard(p) {
+  const div = document.createElement('div');
+  div.className = 'product';
   div.innerHTML = `
-    <img src="${image}" alt="${escapeHtml(p.name)}">
-    <div class="category-badge">${escapeHtml(category)}</div>
+    <img src="${p.image || 'https://via.placeholder.com/200'}" alt="${escapeHtml(p.name)}">
+    <span class="category-badge">${escapeHtml(p.category || '')}</span>
     <div class="product-info">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${Number(p.price).toFixed(2)}€</p>
+      <small>${escapeHtml(p.seller)}</small>
     </div>
   `;
-  div.addEventListener("click", ()=> openModal(p));
+  div.addEventListener('click', () => openProductModal(p));
   return div;
 }
 
-/* ===== Cargar productos ===== */
-async function loadProducts(){
-  const container = document.getElementById("product-list");
-  container.innerHTML = `<p class="placeholder">Cargando productos...</p>`;
+// --- CARGAR PRODUCTOS ---
+async function loadProducts() {
+  const container = document.getElementById('product-list');
+  container.innerHTML = '<p>Cargando productos...</p>';
+
   try {
-    const res = await fetch("data/products.json");
-    const json = await res.json();
-    const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
-
-    allProducts = [...local, ...json].map(p => ({
-      name: p.name || "Sin nombre",
-      price: Number(p.price) || 0,
-      seller: p.seller || "Anónimo",
-      category: p.category || "Sin categoría",
-      image: p.image || null,
-      achievement: p.achievement || ""
-    }));
-
-    buildProfiles();
-    renderFiltered();
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = `<p style="text-align:center;color:#ef4444;padding:40px 0">Error al cargar productos.</p>`;
+    const res = await fetch('data/products.json');
+    const initial = await res.json();
+    const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+    products = [...local, ...initial];
+  } catch {
+    products = JSON.parse(localStorage.getItem(localKey) || '[]');
   }
+
+  renderProducts(products);
 }
 
-/* ===== Construir perfiles ===== */
-function buildProfiles(){
-  sellerProfiles = {};
-  allProducts.forEach(p => {
-    const key = p.seller;
-    if(!sellerProfiles[key]){
-      sellerProfiles[key] = {
-        name: key,
-        avatar: dicebearAvatar(key),
-        bio: `Vendedor local — ${key}`,
-        products: []
-      };
-    }
-    sellerProfiles[key].products.push(p);
-  });
-
-  // cargar reseñas previas
-  const reviewsStore = JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}");
-  Object.keys(sellerProfiles).forEach(s => {
-    sellerProfiles[s].reviews = reviewsStore[s] || [];
-    if(reviewsStore[`__bio__:${s}`]) sellerProfiles[s].bio = reviewsStore[`__bio__:${s}`];
-  });
+function renderProducts(list) {
+  const container = document.getElementById('product-list');
+  container.innerHTML = '';
+  list.forEach(p => container.appendChild(createProductCard(p)));
 }
 
-/* ===== Renderizado y filtros ===== */
-function renderFiltered(){
-  const q = safeLower(document.getElementById("search-input").value || "");
-  const cat = document.getElementById("filter-category").value || "";
-  const container = document.getElementById("product-list");
-  container.innerHTML = "";
-  const filtered = allProducts.filter(p=>{
-    const name = safeLower(p.name);
-    const seller = safeLower(p.seller);
-    const category = safeLower(p.category);
-    const matchText = q === "" || name.includes(q) || seller.includes(q) || category.includes(q);
-    const matchCat = !cat || p.category === cat;
-    return matchText && matchCat;
-  });
-  if(filtered.length === 0){
-    container.innerHTML = `<p style="text-align:center;color:#64748b;padding:40px 0">Sin resultados</p>`;
-    return;
-  }
-  filtered.forEach(p => container.appendChild(createProductCard(p)));
-}
-
-/* ===== Modal de producto ===== */
-function openModal(p){
-  closeProfile(); // 🔹 cerrar perfil si está abierto
-  const modal = document.getElementById("product-modal");
-  document.getElementById("modal-image").src = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name)}`;
-  document.getElementById("modal-name").textContent = p.name;
-  document.getElementById("modal-price").textContent = `💰 ${Number(p.price).toFixed(2)}€`;
-  const sellerEl = document.getElementById("modal-seller");
-  sellerEl.innerHTML = `👤 <a href="#" id="seller-link">${escapeHtml(p.seller)}</a>`;
-  sellerEl.querySelector("#seller-link").addEventListener("click", (ev)=>{
-    ev.preventDefault();
-    closeModal();
-    openProfile(p.seller);
-  });
-  document.getElementById("modal-category").textContent = `📦 ${p.category || "Sin categoría"}`;
-  document.getElementById("modal-achievement").textContent = p.achievement || "";
-  modal.style.display = "flex";
-  modal.setAttribute("aria-hidden","false");
-}
-function closeModal(){
-  const modal = document.getElementById("product-modal");
-  modal.style.display = "none";
-  modal.setAttribute("aria-hidden","true");
-}
-
-/* ===== Perfil del vendedor ===== */
-function openProfile(sellerName){
-  closeModal(); // 🔹 cierra producto si está abierto
-  const profile = sellerProfiles[sellerName];
-  if(!profile) return;
-  currentProfile = sellerName;
-
-  document.getElementById("profile-avatar").src = profile.avatar;
-  document.getElementById("profile-name").textContent = profile.name;
-  document.getElementById("profile-name-2").textContent = profile.name;
-  document.getElementById("profile-bio").value = profile.bio || "";
-
-  document.getElementById("contact-seller").onclick = () => {
-    const text = encodeURIComponent(`Hola ${profile.name}, estoy interesado en tus productos en LocalUndertake.`);
-    window.open(`https://wa.me/?text=${text}`, "_blank");
-  };
-
-  const grid = document.getElementById("profile-products");
-  grid.innerHTML = "";
-  (profile.products || []).forEach(p => grid.appendChild(createProductCard(p)));
-
-  renderReviews(profile.name);
-
-  const modal = document.getElementById("profile-modal");
-  modal.style.display = "flex";
-  modal.setAttribute("aria-hidden","false");
-}
-
-/* ===== Scroll global en perfil ===== */
-document.addEventListener("DOMContentLoaded", () => {
-  const profileModal = document.getElementById("profile-modal");
-  if (profileModal) {
-    profileModal.querySelector(".modal-content").style.maxHeight = "90vh";
-    profileModal.querySelector(".modal-content").style.overflowY = "auto";
-    profileModal.querySelector(".modal-content").style.scrollBehavior = "smooth";
-  }
-});
-
-/* ===== Bio y reseñas ===== */
-function saveBioForCurrent(){
-  if(!currentProfile) return;
-  const text = document.getElementById("profile-bio").value.trim();
-  sellerProfiles[currentProfile].bio = text;
-  const store = JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}");
-  store[`__bio__:${currentProfile}`] = text;
-  localStorage.setItem(LOCAL_REVIEWS_KEY, JSON.stringify(store));
-  alert("Bio guardada.");
-}
-
-function getReviewsStore(){ return JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}"); }
-function saveReviewsStore(obj){ localStorage.setItem(LOCAL_REVIEWS_KEY, JSON.stringify(obj)); }
-
-function renderReviews(sellerName){
-  const reviewsDiv = document.getElementById("reviews-list");
-  reviewsDiv.innerHTML = "";
-  const store = getReviewsStore();
-  const reviews = store[sellerName] || [];
-  if(reviews.length === 0){
-    reviewsDiv.innerHTML = `<p style="color:#64748b">Aún no hay reseñas — sé el primero.</p>`;
-    return;
-  }
-  reviews.slice().reverse().forEach(r => {
-    const d = document.createElement("div");
-    d.className = "review";
-    d.innerHTML = `<div class="meta"><span class="stars">${"★".repeat(r.rating)}</span> ${escapeHtml(r.reviewer)} — <span style="color:#94a3b8;font-weight:500">${new Date(r.date).toLocaleString()}</span></div>
-                   <div class="body">${escapeHtml(r.text)}</div>`;
-    reviewsDiv.appendChild(d);
-  });
-}
-
-function addReviewForCurrent(e){
-  e.preventDefault();
-  if(!currentProfile) return alert("No hay perfil abierto.");
-  const reviewer = document.getElementById("reviewer-name").value.trim();
-  const rating = Number(document.getElementById("review-rating").value);
-  const text = document.getElementById("review-text").value.trim();
-  if(!reviewer || !rating || !text) return alert("Completa todos los campos de la reseña.");
-  const store = getReviewsStore();
-  store[currentProfile] = store[currentProfile] || [];
-  store[currentProfile].push({ reviewer, rating, text, date: new Date().toISOString() });
-  saveReviewsStore(store);
-  renderReviews(currentProfile);
-  document.getElementById("add-review-form").reset();
-}
-
-function clearReviewsForCurrent(){
-  if(!currentProfile) return;
-  if(!confirm("¿Borrar todas las reseñas de este vendedor?")) return;
-  const store = getReviewsStore();
-  delete store[currentProfile];
-  saveReviewsStore(store);
-  renderReviews(currentProfile);
-}
-
-/* ===== Cerrar perfil ===== */
-function closeProfile(){
-  const modal = document.getElementById("profile-modal");
-  modal.style.display = "none";
-  modal.setAttribute("aria-hidden","true");
-  currentProfile = null;
-}
-
-/* ===== Añadir producto local ===== */
-function addLocalProduct(p){
-  const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
-  const normalized = {
-    name: p.name,
-    price: Number(p.price) || 0,
-    seller: p.seller || "Anónimo",
-    category: p.category || "Sin categoría",
-    image: p.image || null,
-    achievement: p.achievement || ""
-  };
-  local.unshift(normalized);
-  localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(local));
+// --- AÑADIR PRODUCTO ---
+function addLocalProduct(product) {
+  const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+  local.unshift(product);
+  localStorage.setItem(localKey, JSON.stringify(local));
   loadProducts();
 }
 
-function clearLocalProducts(){
-  if(!confirm("¿Borrar todos los productos locales?")) return;
-  localStorage.removeItem(LOCAL_PRODUCTS_KEY);
-  loadProducts();
-}
-
-/* ===== Inicialización ===== */
-function setup(){
-  const form = document.getElementById("add-product-form");
-  form.addEventListener("submit", (e)=>{
+// --- FORMULARIO ---
+function setupForm() {
+  const form = document.getElementById('add-product-form');
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = form["product-name"].value.trim();
-    const price = Number(form["product-price"].value);
-    const seller = form["product-seller"].value.trim();
-    const category = form["product-category"].value;
-    const image = form["product-image"].value.trim();
-    if(!name || !seller || !category || isNaN(price)){
-      return alert("Por favor, completa todos los campos correctamente.");
+    if (!userProfile) {
+      alert('Primero crea tu perfil de vendedor (icono 👤 arriba).');
+      return;
     }
-    addLocalProduct({ name, price, seller, category, image, achievement: "🆕 Añadido localmente" });
+
+    const name = form['product-name'].value.trim();
+    const price = Number(form['product-price'].value);
+    const image = form['product-image'].value.trim();
+    const category = form['product-category'].value;
+
+    if (!name || !price || !category) {
+      alert('Completa todos los campos correctamente.');
+      return;
+    }
+
+    const product = {
+      name, price, image,
+      category,
+      seller: userProfile.name,
+      sellerAvatar: userProfile.avatar || '',
+      achievement: '🆕 Añadido por vendedor'
+    };
+
+    addLocalProduct(product);
     form.reset();
   });
 
-  document.getElementById("clear-local").addEventListener("click", clearLocalProducts);
-  document.getElementById("close-modal").addEventListener("click", closeModal);
-  document.getElementById("close-profile").addEventListener("click", closeProfile);
-
-  const searchInput = document.getElementById("search-input");
-  let timer = null;
-  searchInput.addEventListener("input", ()=> {
-    clearTimeout(timer);
-    timer = setTimeout(renderFiltered, 140);
+  document.getElementById('clear-local').addEventListener('click', () => {
+    if (confirm('¿Borrar todos los productos locales?')) {
+      localStorage.removeItem(localKey);
+      loadProducts();
+    }
   });
-  document.getElementById("filter-category").addEventListener("change", renderFiltered);
-
-  document.getElementById("save-bio").addEventListener("click", saveBioForCurrent);
-  document.getElementById("add-review-form").addEventListener("submit", addReviewForCurrent);
-  document.getElementById("clear-reviews").addEventListener("click", clearReviewsForCurrent);
 }
 
-/* ===== Arranque ===== */
-document.addEventListener("DOMContentLoaded", ()=>{
-  setup();
+// --- MODAL PRODUCTO ---
+function openProductModal(p) {
+  const modal = document.getElementById('product-modal');
+  document.getElementById('modal-image').src = p.image || 'https://via.placeholder.com/200';
+  document.getElementById('modal-name').textContent = p.name;
+  document.getElementById('modal-price').textContent = `💰 ${p.price}€`;
+  document.getElementById('modal-category').textContent = `📦 ${p.category}`;
+  const seller = document.getElementById('modal-seller');
+  seller.textContent = p.seller;
+  seller.onclick = () => openProfileModal(p.seller);
+  modal.style.display = 'flex';
+}
+
+document.getElementById('close-modal').onclick = () => {
+  document.getElementById('product-modal').style.display = 'none';
+};
+
+// --- MODAL PERFIL ---
+function openProfileModal(sellerName) {
+  const modal = document.getElementById('profile-modal');
+  const sellerProducts = products.filter(p => p.seller === sellerName);
+  const sellerInfo = (userProfile && userProfile.name === sellerName) ? userProfile : { name: sellerName, bio: "Vendedor local", avatar: "https://via.placeholder.com/100" };
+
+  document.getElementById('profile-name').textContent = sellerInfo.name;
+  document.getElementById('profile-name-2').textContent = sellerInfo.name;
+  document.getElementById('profile-avatar').src = sellerInfo.avatar;
+  document.getElementById('profile-bio').textContent = sellerInfo.bio;
+
+  const container = document.getElementById('profile-products');
+  container.innerHTML = '';
+  sellerProducts.forEach(p => container.appendChild(createProductCard(p)));
+
+  document.getElementById('product-modal').style.display = 'none';
+  modal.style.display = 'flex';
+}
+
+document.getElementById('close-profile').onclick = () => {
+  document.getElementById('profile-modal').style.display = 'none';
+};
+
+// --- MODAL CREAR / EDITAR PERFIL ---
+const editModal = document.getElementById('edit-profile-modal');
+document.getElementById('user-profile-btn').onclick = () => {
+  if (userProfile) {
+    document.getElementById('edit-profile-name').value = userProfile.name;
+    document.getElementById('edit-profile-bio').value = userProfile.bio;
+    document.getElementById('edit-profile-avatar').value = userProfile.avatar;
+    document.getElementById('edit-profile-avatar-preview').src = userProfile.avatar || 'https://via.placeholder.com/100';
+  }
+  editModal.style.display = 'flex';
+};
+
+document.getElementById('close-edit-profile').onclick = () => {
+  editModal.style.display = 'none';
+};
+
+document.getElementById('save-profile').onclick = () => {
+  const name = document.getElementById('edit-profile-name').value.trim();
+  const bio = document.getElementById('edit-profile-bio').value.trim();
+  const avatar = document.getElementById('edit-profile-avatar').value.trim();
+  if (!name) return alert('Debes poner un nombre.');
+  const profile = { name, bio, avatar };
+  saveUserProfile(profile);
+  alert('✅ Perfil guardado.');
+  editModal.style.display = 'none';
+};
+
+// --- BÚSQUEDA Y FILTRO ---
+function setupSearch() {
+  const input = document.getElementById('search-input');
+  const select = document.getElementById('filter-category');
+  function filter() {
+    const term = input.value.toLowerCase();
+    const cat = select.value;
+    const filtered = products.filter(p =>
+      (!cat || p.category === cat) &&
+      (p.name.toLowerCase().includes(term) || p.seller.toLowerCase().includes(term))
+    );
+    renderProducts(filtered);
+  }
+  input.addEventListener('input', filter);
+  select.addEventListener('change', filter);
+}
+
+// --- INICIALIZAR ---
+document.addEventListener('DOMContentLoaded', () => {
+  loadUserProfile();
+  setupForm();
+  setupSearch();
   loadProducts();
 });
