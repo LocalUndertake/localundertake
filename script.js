@@ -4,7 +4,6 @@ const PROFILE_KEY = "localundertake_profiles";
 const LOCAL_USER_KEY = "localundertake_user";
 
 // === UTILIDADES ===
-// 🔹 funciones de perfiles persistidos (faltaban)
 function saveProfiles(profiles) {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profiles || {}));
 }
@@ -12,7 +11,6 @@ function getProfiles() {
   return JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
 }
 
-// funciones products
 function saveProducts(products) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products || []));
 }
@@ -20,7 +18,6 @@ function getProducts() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
 }
 
-// 🔹 perfil de usuario local (guardado separado)
 function getUserProfile() {
   try {
     return JSON.parse(localStorage.getItem(LOCAL_USER_KEY) || "null");
@@ -40,23 +37,16 @@ function updateUserIcon() {
   if (!icon) return;
 
   if (user && user.avatar) {
-    // 🔹 preferimos la avatar personalizada (URL)
     icon.style.backgroundImage = `url('${user.avatar}')`;
-    icon.style.backgroundSize = "cover";
-    icon.style.backgroundPosition = "center";
   } else if (user && user.name) {
-    // 🔹 si no hay avatar, usamos DiceBear con el nombre
     icon.style.backgroundImage = `url('https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
       user.name
     )}')`;
-    icon.style.backgroundSize = "cover";
-    icon.style.backgroundPosition = "center";
   } else {
-    // 🔹 fallback
     icon.style.backgroundImage = `url('https://api.dicebear.com/9.x/initials/svg?seed=User')`;
-    icon.style.backgroundSize = "cover";
-    icon.style.backgroundPosition = "center";
   }
+  icon.style.backgroundSize = "cover";
+  icon.style.backgroundPosition = "center";
 }
 
 function openUserModal() {
@@ -64,73 +54,45 @@ function openUserModal() {
   const user = getUserProfile() || {};
   document.getElementById("user-name").value = user.name || "";
   document.getElementById("user-bio").value = user.bio || "";
-  // 🔹 nuevo campo para avatar (si existe)
-  const avatarInput = document.getElementById("user-avatar");
-  if (avatarInput) avatarInput.value = user.avatar || "";
+  document.getElementById("user-avatar").value = user.avatar || "";
   modal.style.display = "flex";
 }
 function closeUserModal() {
-  const modal = document.getElementById("user-modal");
-  if (modal) modal.style.display = "none";
+  document.getElementById("user-modal").style.display = "none";
 }
 
-// 🔹 Listener de guardado del perfil de usuario (si el botón existe)
 const saveUserBtn = document.getElementById("save-user-profile");
 if (saveUserBtn) {
   saveUserBtn.addEventListener("click", () => {
     const name = document.getElementById("user-name").value.trim();
     const bio = document.getElementById("user-bio").value.trim();
-    const avatarEl = document.getElementById("user-avatar");
-    const avatar = avatarEl ? avatarEl.value.trim() : "";
-
+    const avatar = document.getElementById("user-avatar").value.trim();
     if (!name) return alert("Introduce un nombre para tu perfil.");
 
-    // guardar perfil local
     saveUserProfile({ name, bio, avatar });
 
-    // autocompletar vendedor en el formulario
     const sellerInput = document.getElementById("product-seller");
     if (sellerInput) sellerInput.value = name;
-
-    // si el modal de perfil de vendedor está abierto y corresponde al mismo seller,
-    // actualizamos su vista para reflejar la nueva bio/avatar
-    const profileNameEl = document.getElementById("profile-name");
-    if (profileNameEl && profileNameEl.textContent === name) {
-      // actualizar avatar y bio en el modal del vendedor
-      const profileAvatarEl = document.getElementById("profile-avatar");
-      if (profileAvatarEl) {
-        profileAvatarEl.src =
-          avatar ||
-          `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
-            name
-          )}`;
-      }
-      const profileBioEl = document.getElementById("profile-bio");
-      if (profileBioEl) profileBioEl.value = bio || "";
-    }
 
     closeUserModal();
     alert("Perfil guardado correctamente.");
   });
 }
 
-// 🔹 Icono abrir modal user y cerrar
 const userIconEl = document.getElementById("user-profile-icon");
 if (userIconEl) userIconEl.addEventListener("click", openUserModal);
-const closeUserModalBtn = document.getElementById("close-user-modal");
-if (closeUserModalBtn)
-  closeUserModalBtn.addEventListener("click", closeUserModal);
+document
+  .getElementById("close-user-modal")
+  ?.addEventListener("click", closeUserModal);
 
 // === CARGAR DATOS AL INICIO ===
 document.addEventListener("DOMContentLoaded", () => {
   updateUserIcon();
-
   const user = getUserProfile();
   if (user && user.name) {
     const sellerInput = document.getElementById("product-seller");
     if (sellerInput) sellerInput.value = user.name;
   }
-
   renderProducts();
 });
 
@@ -139,7 +101,6 @@ document
   .getElementById("add-product-form")
   .addEventListener("submit", (e) => {
     e.preventDefault();
-
     const name = document.getElementById("product-name").value.trim();
     const price = parseFloat(
       document.getElementById("product-price").value.trim()
@@ -147,16 +108,11 @@ document
     const sellerInput = document.getElementById("product-seller");
     const user = getUserProfile();
     const seller =
-      user && user.name
-        ? user.name
-        : sellerInput
-        ? sellerInput.value.trim()
-        : "";
+      user && user.name ? user.name : sellerInput?.value.trim() || "";
     const category = document.getElementById("product-category").value;
     const image = document.getElementById("product-image").value.trim();
-    const description = document.getElementById("product-description")
-      ? document.getElementById("product-description").value.trim()
-      : "";
+    const description =
+      document.getElementById("product-description")?.value.trim() || "";
 
     if (!name || !price || !seller || !category)
       return alert("Por favor, completa todos los campos.");
@@ -170,16 +126,14 @@ document
       image:
         image ||
         `https://via.placeholder.com/300x200?text=${encodeURIComponent(name)}`,
-      description: description || "",
+      description,
     };
 
     const products = getProducts();
     products.push(newProduct);
     saveProducts(products);
     renderProducts();
-
     e.target.reset();
-
     if (user && user.name && sellerInput) sellerInput.value = user.name;
   });
 
@@ -198,12 +152,12 @@ if (searchInputEl) {
   let timer = null;
   searchInputEl.addEventListener("input", () => {
     clearTimeout(timer);
-    timer = setTimeout(renderProducts, 140);
+    timer = setTimeout(renderProducts, 150);
   });
 }
-const filterCategoryEl = document.getElementById("filter-category");
-if (filterCategoryEl)
-  filterCategoryEl.addEventListener("change", renderProducts);
+document
+  .getElementById("filter-category")
+  ?.addEventListener("change", renderProducts);
 
 // === MOSTRAR PRODUCTOS ===
 function renderProducts() {
@@ -238,7 +192,7 @@ function renderProducts() {
       <div class="product-info">
         <h3>${p.name}</h3>
         <p>${Number(p.price).toFixed(2)}€</p>
-        <p style="color:#555;font-size:0.9rem;">👤 ${p.seller}</p>
+        <p class="seller-link" data-seller="${p.seller}">👤 ${p.seller}</p>
       </div>
     `;
     card.addEventListener("click", () => openProductModal(p));
@@ -258,41 +212,30 @@ function openProductModal(product) {
   document.getElementById("modal-price").textContent = `💶 ${product.price} €`;
   document.getElementById(
     "modal-seller"
-  ).innerHTML = `👤 <a href="#" id="seller-link">${product.seller}</a>`;
+  ).innerHTML = `👤 <a href="#" class="seller-link" data-seller="${product.seller}">${product.seller}</a>`;
   document.getElementById(
     "modal-category"
   ).textContent = `🏷️ ${product.category}`;
 
-  // 🔹 NUEVO: descripción debajo
   const descContainer = document.getElementById("modal-description");
   if (descContainer)
     descContainer.textContent = product.description || "Sin descripción.";
-
-  const sellerLink = document.getElementById("seller-link");
-  if (sellerLink) {
-    sellerLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      closeProductModal();
-      openProfileModal(product.seller);
-    });
-  }
 }
 
 function closeProductModal() {
-  const modal = document.getElementById("product-modal");
-  if (modal) modal.style.display = "none";
+  document.getElementById("product-modal").style.display = "none";
 }
-const closeModalBtn = document.getElementById("close-modal");
-if (closeModalBtn)
-  closeModalBtn.addEventListener("click", closeProductModal);
+document
+  .getElementById("close-modal")
+  ?.addEventListener("click", closeProductModal);
 
 // === PERFIL DEL VENDEDOR ===
 function openProfileModal(seller) {
   const profiles = getProfiles();
   const profile = profiles[seller] || { bio: "", reviews: [] };
   const products = getProducts().filter((p) => p.seller === seller);
-
   const userProfile = getUserProfile();
+
   const avatar =
     (userProfile && userProfile.name === seller && userProfile.avatar) ||
     `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
@@ -303,72 +246,64 @@ function openProfileModal(seller) {
     profile.bio ||
     "";
 
-  const profileAvatarEl = document.getElementById("profile-avatar");
-  if (profileAvatarEl) profileAvatarEl.src = avatar;
+  document.getElementById("profile-avatar").src = avatar;
+  document.getElementById("profile-name").textContent = seller;
+  document.getElementById("profile-name-2").textContent = seller;
+  document.getElementById("profile-bio").value = bioText;
 
-  const profileNameEl = document.getElementById("profile-name");
-  if (profileNameEl) profileNameEl.textContent = seller;
-
-  const profileName2El = document.getElementById("profile-name-2");
-  if (profileName2El) profileName2El.textContent = seller;
-
-  const profileBioEl = document.getElementById("profile-bio");
-  if (profileBioEl) profileBioEl.value = bioText;
-
-  const profileProducts = document.getElementById("profile-products");
-  if (profileProducts) {
-    profileProducts.innerHTML = "";
-    products.forEach((p) => {
-      const card = document.createElement("div");
-      card.className = "product";
-      card.innerHTML = `
-        <img src="${p.image}" alt="${p.name}">
-        <div class="product-info">
-          <h3>${p.name}</h3>
-          <p>💶 ${p.price} €</p>
-        </div>
-      `;
-      card.addEventListener("click", () => {
-        closeProfileModal();
-        openProductModal(p);
-      });
-      profileProducts.appendChild(card);
+  const container = document.getElementById("profile-products");
+  container.innerHTML = "";
+  products.forEach((p) => {
+    const card = document.createElement("div");
+    card.className = "product";
+    card.innerHTML = `
+      <img src="${p.image}" alt="${p.name}">
+      <div class="product-info">
+        <h3>${p.name}</h3>
+        <p>💶 ${p.price} €</p>
+      </div>
+    `;
+    card.addEventListener("click", () => {
+      closeProfileModal();
+      openProductModal(p);
     });
-  }
+    container.appendChild(card);
+  });
 
   renderReviews(profile.reviews || []);
-  const profileModal = document.getElementById("profile-modal");
-  if (profileModal) profileModal.style.display = "flex";
-
-  const saveBioBtn = document.getElementById("save-bio");
-  if (saveBioBtn) {
-    saveBioBtn.onclick = () => saveSellerBio(seller);
-  }
+  document.getElementById("profile-modal").style.display = "flex";
+  document.getElementById("save-bio").onclick = () => saveSellerBio(seller);
 }
 
 function closeProfileModal() {
-  const modal = document.getElementById("profile-modal");
-  if (modal) modal.style.display = "none";
+  document.getElementById("profile-modal").style.display = "none";
 }
-const closeProfileBtn = document.getElementById("close-profile");
-if (closeProfileBtn)
-  closeProfileBtn.addEventListener("click", closeProfileModal);
+document
+  .getElementById("close-profile")
+  ?.addEventListener("click", closeProfileModal);
+
+// === CLIC EN EL NOMBRE DEL VENDEDOR DESDE TARJETA ===
+document.addEventListener("click", (e) => {
+  const sellerEl = e.target.closest(".seller-link");
+  if (sellerEl && sellerEl.dataset.seller) {
+    e.preventDefault();
+    closeProductModal();
+    openProfileModal(sellerEl.dataset.seller);
+  }
+});
 
 // === GUARDAR BIO ===
 function saveSellerBio(seller) {
-  const bioEl = document.getElementById("profile-bio");
-  const bio = bioEl ? bioEl.value.trim() : "";
+  const bio = document.getElementById("profile-bio").value.trim();
   const profiles = getProfiles();
   if (!profiles[seller]) profiles[seller] = { bio: "", reviews: [] };
   profiles[seller].bio = bio;
   saveProfiles(profiles);
-
   const user = getUserProfile();
   if (user && user.name === seller) {
     user.bio = bio;
     saveUserProfile(user);
   }
-
   alert("Biografía guardada.");
 }
 
@@ -386,7 +321,7 @@ function renderReviews(reviews) {
     div.className = "review";
     div.innerHTML = `<div class="meta"><span class="stars">${"★".repeat(
       r.rating || 0
-    )}</span> ${escapeHtml(r.reviewer || r.name || "Anon")}</div>
+    )}</span> ${escapeHtml(r.reviewer || "Anon")}</div>
                      <div class="body">${escapeHtml(r.text || "")}</div>`;
     list.appendChild(div);
   });
@@ -409,12 +344,10 @@ if (addReviewForm) {
     const rating = Number(document.getElementById("review-rating").value);
     const text = document.getElementById("review-text").value.trim();
     const seller = document.getElementById("profile-name").textContent;
-
     if (!name || !rating || !text) return;
 
     const profiles = getProfiles();
     if (!profiles[seller]) profiles[seller] = { bio: "", reviews: [] };
-    profiles[seller].reviews = profiles[seller].reviews || [];
     profiles[seller].reviews.push({
       reviewer: name,
       rating,
@@ -422,19 +355,15 @@ if (addReviewForm) {
       date: new Date().toISOString(),
     });
     saveProfiles(profiles);
-
     renderReviews(profiles[seller].reviews);
     e.target.reset();
   });
 }
 
-const clearReviewsBtn = document.getElementById("clear-reviews");
-if (clearReviewsBtn) {
-  clearReviewsBtn.addEventListener("click", () => {
-    const seller = document.getElementById("profile-name").textContent;
-    const profiles = getProfiles();
-    if (profiles[seller]) profiles[seller].reviews = [];
-    saveProfiles(profiles);
-    renderReviews([]);
-  });
-}
+document.getElementById("clear-reviews")?.addEventListener("click", () => {
+  const seller = document.getElementById("profile-name").textContent;
+  const profiles = getProfiles();
+  if (profiles[seller]) profiles[seller].reviews = [];
+  saveProfiles(profiles);
+  renderReviews([]);
+});
