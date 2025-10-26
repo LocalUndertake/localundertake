@@ -1,152 +1,163 @@
+/* ===== ESTILO BASE ===== */
+* {
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
 body {
-  font-family: 'Poppins', sans-serif;
-  background: #f6f7fb;
   margin: 0;
+  background: #f9f9fb;
   color: #333;
 }
 header {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #4a90e2, #0078d7);
   color: white;
   text-align: center;
-  padding: 40px 20px;
+  padding: 2rem 1rem;
   position: relative;
 }
-.header-inner h1 {
+header h1 {
   margin: 0;
   font-weight: 600;
 }
-.header-inner p {
-  margin-top: 8px;
+header p {
+  margin: 0.5rem 0 0;
   font-weight: 300;
 }
-
-/* Icono de perfil (nuevo) */
-.user-profile-icon {
-  position: absolute;
-  top: 18px;
-  right: 22px;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: url('https://api.dicebear.com/9.x/initials/svg?seed=User') center/cover no-repeat, #fff;
-  border: 2px solid rgba(255,255,255,0.9);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-.user-profile-icon:hover {
-  transform: scale(1.05);
+main {
+  padding: 1rem;
 }
 
-/* Resto de estilos (idéntico a original) */
+/* ===== FORMULARIO ===== */
 .form-section {
   background: white;
-  margin: 30px auto;
-  padding: 20px;
   border-radius: 12px;
-  max-width: 800px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
 }
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+}
+.form-actions {
+  display: flex;
+  gap: 8px;
 }
 button {
-  background: #3b82f6;
+  background: #0078d7;
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
   cursor: pointer;
   transition: background 0.2s;
 }
-button:hover { background: #2563eb; }
-button.danger { background: #ef4444; }
-button.danger:hover { background: #dc2626; }
+button:hover {
+  background: #005ea6;
+}
+button.danger {
+  background: #d9534f;
+}
+button.danger:hover {
+  background: #b52b27;
+}
+button.small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+input, select, textarea {
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  width: 100%;
+}
+.note {
+  font-size: 0.85rem;
+  color: #666;
+}
 
+/* ===== BÚSQUEDA ===== */
 .search-wrapper {
-  margin: 20px auto;
-  max-width: 800px;
+  margin-bottom: 1.5rem;
 }
 .search-card {
   background: white;
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   display: flex;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   align-items: center;
-}
-.icon-search {
-  width: 22px;
-  height: 22px;
-  margin-right: 6px;
 }
 .search-left {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex: 1;
 }
-.search-right select,
-.search-left input {
+.icon-search {
+  width: 22px;
+  height: 22px;
+  color: #666;
+}
+#search-input {
   border: none;
   outline: none;
-  background: transparent;
-  font-size: 1rem;
-}
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px,1fr));
-  gap: 20px;
-  max-width: 1000px;
-  margin: 30px auto;
-}
-.product {
-  background: white;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.product:hover { transform: scale(1.02); }
-.product img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-.category-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(59,130,246,0.9);
-  color: white;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-}
-.product-info {
-  padding: 10px;
+  flex: 1;
 }
 
-/* Modales */
+/* ===== GRID DE PRODUCTOS ===== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.product-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  padding: 0.8rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+}
+.product-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.product-card h3 {
+  margin: 0.5rem 0 0.2rem;
+  font-size: 1rem;
+}
+.product-card p {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+/* ===== MODALES ===== */
 .modal {
+  position: fixed;
+  inset: 0;
   display: none;
   justify-content: center;
   align-items: center;
-  position: fixed;
-  inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 100;
 }
 .modal-content {
   background: white;
-  border-radius: 14px;
-  max-width: 500px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 1rem;
+  max-width: 600px;
+  width: 90%;
   position: relative;
-  max-height: 85vh;
+  max-height: 90vh;
   overflow-y: auto;
 }
 .modal-close {
@@ -157,25 +168,74 @@ button.danger:hover { background: #dc2626; }
   background: none;
   border: none;
   cursor: pointer;
+  color: #333;
 }
-.profile-content { width: 90%; max-width: 700px; }
-.profile-avatar {
-  width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+
+/* ===== PERFIL DE VENDEDOR ===== */
+.profile-content {
+  max-width: 700px;
 }
 .profile-header {
-  display: flex; gap: 20px; align-items: center;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
-.profile-body {
-  margin-top: 20px;
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .profile-bio {
   width: 100%;
-  resize: none;
+  margin-top: 0.5rem;
 }
-.reviews-section { margin-top: 20px; }
+.profile-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ===== RESEÑAS ===== */
+.reviews-section {
+  margin-top: 1rem;
+}
+.review-form {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.6rem;
+}
+#reviews-list p {
+  margin: 0.4rem 0;
+  background: #f5f7fa;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+/* ===== ICONO DE PERFIL NUEVO ===== */
+.profile-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  cursor: pointer;
+}
+.profile-icon img {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  transition: transform .15s ease;
+}
+.profile-icon img:hover {
+  transform: scale(1.06);
+}
+
+/* ===== FOOTER ===== */
 footer {
   text-align: center;
-  padding: 20px;
-  font-size: 0.9rem;
-  color: #64748b;
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 2rem;
+  padding: 1rem;
 }
