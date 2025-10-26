@@ -194,8 +194,12 @@ function openProductModal(product) {
   document.getElementById("modal-image").src = product.image;
   document.getElementById("modal-name").textContent = product.name;
   document.getElementById("modal-price").textContent = `💶 ${product.price} €`;
-  document.getElementById("modal-seller").innerHTML = `👤 <a href="#" id="seller-link">${product.seller}</a>`;
-  document.getElementById("modal-category").textContent = `🏷️ ${product.category}`;
+  document.getElementById(
+    "modal-seller"
+  ).innerHTML = `👤 <a href="#" id="seller-link">${product.seller}</a>`;
+  document.getElementById(
+    "modal-category"
+  ).textContent = `🏷️ ${product.category}`;
 
   document
     .getElementById("seller-link")
@@ -220,16 +224,22 @@ function openProfileModal(seller) {
   const products = getProducts().filter((p) => p.seller === seller);
 
   const userProfile = getUserProfile();
+  // 🔹 Si el vendedor coincide con el perfil local, usamos su foto y bio
   const avatar =
     (userProfile && userProfile.name === seller && userProfile.avatar) ||
     `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
       seller
     )}`;
 
+  const bioText =
+    (userProfile && userProfile.name === seller && userProfile.bio) ||
+    profile.bio ||
+    "";
+
   document.getElementById("profile-avatar").src = avatar;
   document.getElementById("profile-name").textContent = seller;
   document.getElementById("profile-name-2").textContent = seller;
-  document.getElementById("profile-bio").value = profile.bio || "";
+  document.getElementById("profile-bio").value = bioText;
 
   const profileProducts = document.getElementById("profile-products");
   profileProducts.innerHTML = "";
