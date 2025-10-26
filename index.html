@@ -13,7 +13,7 @@
       <h1>🌍 LocalUndertake</h1>
       <p>Encuentra y apoya negocios locales — descubre productos únicos.</p>
     </div>
-    <button id="user-profile-btn" class="profile-icon" title="Mi perfil">👤</button>
+    <button id="user-profile-btn" class="user-profile-btn" aria-label="Perfil de vendedor">👤</button>
   </header>
 
   <main>
@@ -77,8 +77,8 @@
       <div class="modal-body">
         <h3 id="modal-name"></h3>
         <p id="modal-price"></p>
-        <p><strong>Vendedor:</strong> <span id="modal-seller" class="seller-link"></span></p>
         <p id="modal-category"></p>
+        <p id="modal-seller"></p>
       </div>
     </div>
   </div>
@@ -91,30 +91,55 @@
         <img id="profile-avatar" class="profile-avatar" src="" alt="Avatar vendedor">
         <div class="profile-info">
           <h3 id="profile-name"></h3>
-          <p id="profile-bio"></p>
+          <textarea id="profile-bio" class="profile-bio" rows="2" placeholder="Escribe una bio..."></textarea>
+          <div class="profile-actions">
+            <button id="save-bio" class="small">Guardar bio</button>
+          </div>
         </div>
       </div>
+
       <div class="profile-body">
         <h4>Productos de <span id="profile-name-2"></span></h4>
         <div id="profile-products" class="product-grid profile-grid"></div>
+
+        <hr>
+
+        <div class="reviews-section">
+          <h4>Reseñas</h4>
+          <div id="reviews-list"></div>
+
+          <form id="add-review-form" class="review-form">
+            <input id="reviewer-name" type="text" placeholder="Tu nombre" required>
+            <select id="review-rating" required>
+              <option value="">Puntuación</option>
+              <option value="5">5 — Excelente</option>
+              <option value="4">4 — Muy bueno</option>
+              <option value="3">3 — Bien</option>
+              <option value="2">2 — Regular</option>
+              <option value="1">1 — Malo</option>
+            </select>
+            <textarea id="review-text" rows="2" placeholder="Tu comentario" required></textarea>
+            <div style="display:flex;gap:8px;">
+              <button type="submit">Enviar reseña</button>
+              <button id="clear-reviews" type="button" class="danger small">Borrar reseñas</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL CONFIGURAR PERFIL -->
+  <!-- MODAL EDITAR PERFIL DE VENDEDOR (icono 👤) -->
   <div id="edit-profile-modal" class="modal" aria-hidden="true">
-    <div class="modal-content profile-content" role="dialog" aria-modal="true">
+    <div class="modal-content" role="dialog" aria-modal="true">
       <button id="close-edit-profile" class="modal-close" aria-label="Cerrar">&times;</button>
-      <div class="profile-header">
-        <img id="edit-profile-avatar-preview" class="profile-avatar" src="" alt="Avatar vista previa">
-        <div class="profile-info">
-          <input id="edit-profile-name" type="text" placeholder="Tu nombre o marca" required>
-          <textarea id="edit-profile-bio" rows="2" placeholder="Escribe una breve bio..."></textarea>
-          <input id="edit-profile-avatar" type="url" placeholder="URL de tu avatar (opcional)">
-          <div class="profile-actions">
-            <button id="save-profile" class="small">Guardar perfil</button>
-          </div>
-        </div>
+      <div class="modal-body">
+        <h3>👤 Mi perfil de vendedor</h3>
+        <input id="edit-profile-name" type="text" placeholder="Nombre del vendedor" required>
+        <input id="edit-profile-avatar" type="url" placeholder="URL del avatar (opcional)">
+        <img id="edit-profile-avatar-preview" src="https://via.placeholder.com/100" alt="Vista previa del avatar" style="margin:10px 0;border-radius:10px;">
+        <textarea id="edit-profile-bio" rows="2" placeholder="Escribe tu bio..."></textarea>
+        <button id="save-profile">Guardar perfil</button>
       </div>
     </div>
   </div>
