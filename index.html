@@ -10,10 +10,12 @@
 <body>
   <header>
     <div class="header-inner">
-      <h1>🌍 LocalUndertake</h1>
+      <h1>🌍 Local Undertake</h1>
       <p>Encuentra y apoya negocios locales — descubre productos únicos.</p>
     </div>
-    <button id="user-profile-btn" class="user-profile-btn" aria-label="Perfil de vendedor">👤</button>
+
+    <!-- ICONO PERFIL -->
+    <div id="user-profile-icon" class="user-profile-icon" title="Tu perfil"></div>
   </header>
 
   <main>
@@ -23,6 +25,7 @@
       <form id="add-product-form" class="form-grid">
         <input id="product-name" name="product-name" type="text" placeholder="Nombre del producto" required>
         <input id="product-price" name="product-price" type="number" placeholder="Precio (€)" required>
+        <input id="product-seller" name="product-seller" type="text" placeholder="(usará tu perfil automáticamente)" disabled>
         <select id="product-category" name="product-category" required>
           <option value="">Selecciona categoría</option>
           <option>Accesorios</option>
@@ -77,8 +80,9 @@
       <div class="modal-body">
         <h3 id="modal-name"></h3>
         <p id="modal-price"></p>
-        <p id="modal-category"></p>
         <p id="modal-seller"></p>
+        <p id="modal-category"></p>
+        <p id="modal-achievement"></p>
       </div>
     </div>
   </div>
@@ -94,6 +98,7 @@
           <textarea id="profile-bio" class="profile-bio" rows="2" placeholder="Escribe una bio..."></textarea>
           <div class="profile-actions">
             <button id="save-bio" class="small">Guardar bio</button>
+            <button id="contact-seller" class="small">Contactar (WhatsApp)</button>
           </div>
         </div>
       </div>
@@ -126,20 +131,19 @@
           </form>
         </div>
       </div>
+
     </div>
   </div>
 
-  <!-- MODAL EDITAR PERFIL DE VENDEDOR (icono 👤) -->
-  <div id="edit-profile-modal" class="modal" aria-hidden="true">
+  <!-- MODAL PERFIL USUARIO (para crear el tuyo) -->
+  <div id="user-modal" class="modal" aria-hidden="true">
     <div class="modal-content" role="dialog" aria-modal="true">
-      <button id="close-edit-profile" class="modal-close" aria-label="Cerrar">&times;</button>
+      <button id="close-user-modal" class="modal-close" aria-label="Cerrar">&times;</button>
       <div class="modal-body">
-        <h3>👤 Mi perfil de vendedor</h3>
-        <input id="edit-profile-name" type="text" placeholder="Nombre del vendedor" required>
-        <input id="edit-profile-avatar" type="url" placeholder="URL del avatar (opcional)">
-        <img id="edit-profile-avatar-preview" src="https://via.placeholder.com/100" alt="Vista previa del avatar" style="margin:10px 0;border-radius:10px;">
-        <textarea id="edit-profile-bio" rows="2" placeholder="Escribe tu bio..."></textarea>
-        <button id="save-profile">Guardar perfil</button>
+        <h3>👤 Tu perfil</h3>
+        <input id="user-name" type="text" placeholder="Tu nombre o marca" required style="margin-top:8px;">
+        <textarea id="user-bio" rows="2" placeholder="Cuéntanos algo sobre ti..." style="margin-top:8px;"></textarea>
+        <button id="save-user-profile" style="margin-top:10px;">Guardar perfil</button>
       </div>
     </div>
   </div>
