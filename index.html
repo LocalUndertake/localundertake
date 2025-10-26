@@ -10,12 +10,14 @@
 <body>
   <header>
     <div class="header-inner">
-      <h1>🌍 Local Undertake</h1>
+      <h1>🌍 LocalUndertake</h1>
       <p>Encuentra y apoya negocios locales — descubre productos únicos.</p>
     </div>
 
-    <!-- ICONO PERFIL -->
-    <div id="user-profile-icon" class="user-profile-icon" title="Tu perfil"></div>
+    <!-- ICONO DE PERFIL -->
+    <div id="profile-icon" class="profile-icon" title="Tu perfil">
+      <img id="profile-avatar-mini" src="https://api.dicebear.com/9.x/initials/svg?seed=Invitado&backgroundColor=b6e3f4" alt="Icono perfil">
+    </div>
   </header>
 
   <main>
@@ -25,7 +27,7 @@
       <form id="add-product-form" class="form-grid">
         <input id="product-name" name="product-name" type="text" placeholder="Nombre del producto" required>
         <input id="product-price" name="product-price" type="number" placeholder="Precio (€)" required>
-        <input id="product-seller" name="product-seller" type="text" placeholder="(usará tu perfil automáticamente)" disabled>
+        <input id="product-seller" name="product-seller" type="text" placeholder="Vendedor / Marca" required>
         <select id="product-category" name="product-category" required>
           <option value="">Selecciona categoría</option>
           <option>Accesorios</option>
@@ -131,19 +133,23 @@
           </form>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- MODAL PERFIL USUARIO (para crear el tuyo) -->
+  <!-- MODAL PERFIL DE USUARIO -->
   <div id="user-modal" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true">
-      <button id="close-user-modal" class="modal-close" aria-label="Cerrar">&times;</button>
-      <div class="modal-body">
-        <h3>👤 Tu perfil</h3>
-        <input id="user-name" type="text" placeholder="Tu nombre o marca" required style="margin-top:8px;">
-        <textarea id="user-bio" rows="2" placeholder="Cuéntanos algo sobre ti..." style="margin-top:8px;"></textarea>
-        <button id="save-user-profile" style="margin-top:10px;">Guardar perfil</button>
+    <div class="modal-content profile-content" role="dialog" aria-modal="true">
+      <button id="close-user" class="modal-close" aria-label="Cerrar">&times;</button>
+      <div class="profile-header">
+        <img id="user-avatar" class="profile-avatar" src="https://api.dicebear.com/9.x/initials/svg?seed=Invitado&backgroundColor=b6e3f4" alt="Tu avatar">
+        <div class="profile-info">
+          <h3>Tu perfil</h3>
+          <input id="user-name" type="text" placeholder="Tu nombre o marca">
+          <textarea id="user-bio" class="profile-bio" rows="2" placeholder="Escribe una bio..."></textarea>
+          <div class="profile-actions">
+            <button id="save-user" class="small">Guardar perfil</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
