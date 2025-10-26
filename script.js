@@ -12,9 +12,7 @@ function escapeHtml(text) {
 
 function loadUserProfile() {
   const data = localStorage.getItem(profileKey);
-  if (data) {
-    userProfile = JSON.parse(data);
-  }
+  if (data) userProfile = JSON.parse(data);
 }
 
 function saveUserProfile(profile) {
@@ -32,10 +30,14 @@ function createProductCard(p) {
     <div class="product-info">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${Number(p.price).toFixed(2)}€</p>
-      <small>${escapeHtml(p.seller)}</small>
+      <small>👤 ${escapeHtml(p.seller)}</small>
     </div>
   `;
-  div.addEventListener('click', () => openProductModal(p));
+  div.addEventListener('click', () => {
+    // Si el perfil está abierto, ciérralo
+    document.getElementById('profile-modal').style.display = 'none';
+    openProductModal(p);
+  });
   return div;
 }
 
@@ -43,7 +45,6 @@ function createProductCard(p) {
 async function loadProducts() {
   const container = document.getElementById('product-list');
   container.innerHTML = '<p>Cargando productos...</p>';
-
   try {
     const res = await fetch('data/products.json');
     const initial = await res.json();
@@ -52,7 +53,6 @@ async function loadProducts() {
   } catch {
     products = JSON.parse(localStorage.getItem(localKey) || '[]');
   }
-
   renderProducts(products);
 }
 
@@ -118,7 +118,7 @@ function openProductModal(p) {
   document.getElementById('modal-price').textContent = `💰 ${p.price}€`;
   document.getElementById('modal-category').textContent = `📦 ${p.category}`;
   const seller = document.getElementById('modal-seller');
-  seller.textContent = p.seller;
+  seller.textContent = `👤 ${p.seller}`;
   seller.onclick = () => openProfileModal(p.seller);
   modal.style.display = 'flex';
 }
@@ -127,11 +127,13 @@ document.getElementById('close-modal').onclick = () => {
   document.getElementById('product-modal').style.display = 'none';
 };
 
-// --- MODAL PERFIL ---
+// --- PERFIL ---
 function openProfileModal(sellerName) {
   const modal = document.getElementById('profile-modal');
   const sellerProducts = products.filter(p => p.seller === sellerName);
-  const sellerInfo = (userProfile && userProfile.name === sellerName) ? userProfile : { name: sellerName, bio: "Vendedor local", avatar: "https://via.placeholder.com/100" };
+  const sellerInfo = (userProfile && userProfile.name === sellerName)
+    ? userProfile
+    : { name: sellerName, bio: "Vendedor local", avatar: "https://via.placeholder.com/100" };
 
   document.getElementById('profile-name').textContent = sellerInfo.name;
   document.getElementById('profile-name-2').textContent = sellerInfo.name;
@@ -142,6 +144,9 @@ function openProfileModal(sellerName) {
   container.innerHTML = '';
   sellerProducts.forEach(p => container.appendChild(createProductCard(p)));
 
+  // Mostrar reseñas
+  loadReviews(sellerName);
+
   document.getElementById('product-modal').style.display = 'none';
   modal.style.display = 'flex';
 }
@@ -150,7 +155,55 @@ document.getElementById('close-profile').onclick = () => {
   document.getElementById('profile-modal').style.display = 'none';
 };
 
-// --- MODAL CREAR / EDITAR PERFIL ---
+// --- SISTEMA DE RESEÑAS ---
+function getReviewsKey(seller) {
+  return `reviews_${seller}`;
+}
+
+function loadReviews(seller) {
+  const listDiv = document.getElementById('reviews-list');
+  listDiv.innerHTML = '';
+  const data = JSON.parse(localStorage.getItem(getReviewsKey(seller)) || '[]');
+  if (!data.length) {
+    listDiv.innerHTML = '<p>🗨️ No hay reseñas todavía.</p>';
+    return;
+  }
+  data.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'review';
+    div.innerHTML = `<strong>${escapeHtml(r.name)}</strong> — ⭐${r.rating}<br><em>${escapeHtml(r.text)}</em>`;
+    listDiv.appendChild(div);
+  });
+}
+
+function setupReviews() {
+  const form = document.getElementById('add-review-form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const seller = document.getElementById('profile-name').textContent;
+    const name = document.getElementById('reviewer-name').value.trim();
+    const rating = document.getElementById('review-rating').value;
+    const text = document.getElementById('review-text').value.trim();
+
+    if (!name || !rating || !text) return alert('Completa todos los campos');
+
+    const data = JSON.parse(localStorage.getItem(getReviewsKey(seller)) || '[]');
+    data.push({ name, rating, text });
+    localStorage.setItem(getReviewsKey(seller), JSON.stringify(data));
+    form.reset();
+    loadReviews(seller);
+  });
+
+  document.getElementById('clear-reviews').addEventListener('click', () => {
+    const seller = document.getElementById('profile-name').textContent;
+    if (confirm('¿Borrar todas las reseñas?')) {
+      localStorage.removeItem(getReviewsKey(seller));
+      loadReviews(seller);
+    }
+  });
+}
+
+// --- PERFIL DE USUARIO (Vendedor autenticado local) ---
 const editModal = document.getElementById('edit-profile-modal');
 document.getElementById('user-profile-btn').onclick = () => {
   if (userProfile) {
@@ -199,5 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadUserProfile();
   setupForm();
   setupSearch();
+  setupReviews();
   loadProducts();
 });
