@@ -1,257 +1,233 @@
-// --- VARIABLES GLOBALES ---
-const localKey = 'localundertake_products';
-const profileKey = 'localundertake_user';
-let products = [];
-let userProfile = null;
+/* ===== Estado global ===== */
+let allProducts = [];
+let sellerProfiles = {};
+let currentProfile = null;
+const LOCAL_PRODUCTS_KEY = "localundertake_products";
+const LOCAL_REVIEWS_KEY = "localundertake_reviews";
+const LOCAL_USER_KEY = "localundertake_user";
 
-// --- FUNCIONES AUXILIARES ---
-function escapeHtml(text) {
-  if (!text && text !== 0) return '';
-  return String(text).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+/* ===== Utilidades ===== */
+function safeLower(v){ return String(v || "").toLowerCase(); }
+function escapeHtml(t){ return t ? String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
+function dicebearAvatar(seed){
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,89cff0,f0a6ca`;
 }
 
-function loadUserProfile() {
-  const data = localStorage.getItem(profileKey);
-  if (data) userProfile = JSON.parse(data);
+/* ===== Perfil del usuario actual ===== */
+function getUserProfile(){
+  return JSON.parse(localStorage.getItem(LOCAL_USER_KEY) || "null");
+}
+function saveUserProfile(profile){
+  localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
+  updateUserIcon();
+}
+function updateUserIcon(){
+  const icon = document.getElementById("user-profile-icon");
+  const user = getUserProfile();
+  if(!icon) return;
+  if(user && user.name){
+    icon.style.backgroundImage = `url('${dicebearAvatar(user.name)}')`;
+  } else {
+    icon.style.backgroundImage = `url('https://api.dicebear.com/9.x/initials/svg?seed=User')`;
+  }
 }
 
-function saveUserProfile(profile) {
-  localStorage.setItem(profileKey, JSON.stringify(profile));
-  userProfile = profile;
-}
-
-// --- CREAR TARJETA ---
-function createProductCard(p) {
-  const div = document.createElement('div');
-  div.className = 'product';
+/* ===== Crear tarjeta de producto ===== */
+function createProductCard(p){
+  const div = document.createElement("div");
+  div.className = "product";
+  const image = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name || "Producto")}`;
+  const category = p.category || "Sin categoría";
   div.innerHTML = `
-    <img src="${p.image || 'https://via.placeholder.com/200'}" alt="${escapeHtml(p.name)}">
-    <span class="category-badge">${escapeHtml(p.category || '')}</span>
+    <img src="${image}" alt="${escapeHtml(p.name)}">
+    <div class="category-badge">${escapeHtml(category)}</div>
     <div class="product-info">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${Number(p.price).toFixed(2)}€</p>
-      <small>👤 ${escapeHtml(p.seller)}</small>
+      <p style="color:#555;font-size:0.9rem;">👤 ${escapeHtml(p.seller)}</p>
     </div>
   `;
-  div.addEventListener('click', () => {
-    // Si el perfil está abierto, ciérralo
-    document.getElementById('profile-modal').style.display = 'none';
-    openProductModal(p);
-  });
+  div.addEventListener("click", ()=> openModal(p));
   return div;
 }
 
-// --- CARGAR PRODUCTOS ---
-async function loadProducts() {
-  const container = document.getElementById('product-list');
-  container.innerHTML = '<p>Cargando productos...</p>';
+/* ===== Cargar productos ===== */
+async function loadProducts(){
+  const container = document.getElementById("product-list");
+  container.innerHTML = `<p class="placeholder">Cargando productos...</p>`;
   try {
-    const res = await fetch('data/products.json');
-    const initial = await res.json();
-    const local = JSON.parse(localStorage.getItem(localKey) || '[]');
-    products = [...local, ...initial];
-  } catch {
-    products = JSON.parse(localStorage.getItem(localKey) || '[]');
+    const res = await fetch("data/products.json");
+    const json = await res.json();
+    const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
+
+    allProducts = [...local, ...json].map(p => ({
+      name: p.name || "Sin nombre",
+      price: Number(p.price) || 0,
+      seller: p.seller || "Anónimo",
+      category: p.category || "Sin categoría",
+      image: p.image || null,
+      achievement: p.achievement || ""
+    }));
+
+    buildProfiles();
+    renderFiltered();
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<p style="text-align:center;color:#ef4444;padding:40px 0">Error al cargar productos.</p>`;
   }
-  renderProducts(products);
 }
 
-function renderProducts(list) {
-  const container = document.getElementById('product-list');
-  container.innerHTML = '';
-  list.forEach(p => container.appendChild(createProductCard(p)));
-}
-
-// --- AÑADIR PRODUCTO ---
-function addLocalProduct(product) {
-  const local = JSON.parse(localStorage.getItem(localKey) || '[]');
-  local.unshift(product);
-  localStorage.setItem(localKey, JSON.stringify(local));
-  loadProducts();
-}
-
-// --- FORMULARIO ---
-function setupForm() {
-  const form = document.getElementById('add-product-form');
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (!userProfile) {
-      alert('Primero crea tu perfil de vendedor (icono 👤 arriba).');
-      return;
+/* ===== Construir perfiles ===== */
+function buildProfiles(){
+  sellerProfiles = {};
+  allProducts.forEach(p => {
+    const key = p.seller;
+    if(!sellerProfiles[key]){
+      sellerProfiles[key] = {
+        name: key,
+        avatar: dicebearAvatar(key),
+        bio: `Vendedor local — ${key}`,
+        products: []
+      };
     }
-
-    const name = form['product-name'].value.trim();
-    const price = Number(form['product-price'].value);
-    const image = form['product-image'].value.trim();
-    const category = form['product-category'].value;
-
-    if (!name || !price || !category) {
-      alert('Completa todos los campos correctamente.');
-      return;
-    }
-
-    const product = {
-      name, price, image,
-      category,
-      seller: userProfile.name,
-      sellerAvatar: userProfile.avatar || '',
-      achievement: '🆕 Añadido por vendedor'
-    };
-
-    addLocalProduct(product);
-    form.reset();
+    sellerProfiles[key].products.push(p);
   });
 
-  document.getElementById('clear-local').addEventListener('click', () => {
-    if (confirm('¿Borrar todos los productos locales?')) {
-      localStorage.removeItem(localKey);
-      loadProducts();
-    }
+  // cargar reseñas previas
+  const reviewsStore = JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}");
+  Object.keys(sellerProfiles).forEach(s => {
+    sellerProfiles[s].reviews = reviewsStore[s] || [];
+    if(reviewsStore[`__bio__:${s}`]) sellerProfiles[s].bio = reviewsStore[`__bio__:${s}`];
   });
 }
 
-// --- MODAL PRODUCTO ---
-function openProductModal(p) {
-  const modal = document.getElementById('product-modal');
-  document.getElementById('modal-image').src = p.image || 'https://via.placeholder.com/200';
-  document.getElementById('modal-name').textContent = p.name;
-  document.getElementById('modal-price').textContent = `💰 ${p.price}€`;
-  document.getElementById('modal-category').textContent = `📦 ${p.category}`;
-  const seller = document.getElementById('modal-seller');
-  seller.textContent = `👤 ${p.seller}`;
-  seller.onclick = () => openProfileModal(p.seller);
-  modal.style.display = 'flex';
-}
-
-document.getElementById('close-modal').onclick = () => {
-  document.getElementById('product-modal').style.display = 'none';
-};
-
-// --- PERFIL ---
-function openProfileModal(sellerName) {
-  const modal = document.getElementById('profile-modal');
-  const sellerProducts = products.filter(p => p.seller === sellerName);
-  const sellerInfo = (userProfile && userProfile.name === sellerName)
-    ? userProfile
-    : { name: sellerName, bio: "Vendedor local", avatar: "https://via.placeholder.com/100" };
-
-  document.getElementById('profile-name').textContent = sellerInfo.name;
-  document.getElementById('profile-name-2').textContent = sellerInfo.name;
-  document.getElementById('profile-avatar').src = sellerInfo.avatar;
-  document.getElementById('profile-bio').textContent = sellerInfo.bio;
-
-  const container = document.getElementById('profile-products');
-  container.innerHTML = '';
-  sellerProducts.forEach(p => container.appendChild(createProductCard(p)));
-
-  // Mostrar reseñas
-  loadReviews(sellerName);
-
-  document.getElementById('product-modal').style.display = 'none';
-  modal.style.display = 'flex';
-}
-
-document.getElementById('close-profile').onclick = () => {
-  document.getElementById('profile-modal').style.display = 'none';
-};
-
-// --- SISTEMA DE RESEÑAS ---
-function getReviewsKey(seller) {
-  return `reviews_${seller}`;
-}
-
-function loadReviews(seller) {
-  const listDiv = document.getElementById('reviews-list');
-  listDiv.innerHTML = '';
-  const data = JSON.parse(localStorage.getItem(getReviewsKey(seller)) || '[]');
-  if (!data.length) {
-    listDiv.innerHTML = '<p>🗨️ No hay reseñas todavía.</p>';
+/* ===== Renderizado y filtros ===== */
+function renderFiltered(){
+  const q = safeLower(document.getElementById("search-input").value || "");
+  const cat = document.getElementById("filter-category").value || "";
+  const container = document.getElementById("product-list");
+  container.innerHTML = "";
+  const filtered = allProducts.filter(p=>{
+    const name = safeLower(p.name);
+    const seller = safeLower(p.seller);
+    const category = safeLower(p.category);
+    const matchText = q === "" || name.includes(q) || seller.includes(q) || category.includes(q);
+    const matchCat = !cat || p.category === cat;
+    return matchText && matchCat;
+  });
+  if(filtered.length === 0){
+    container.innerHTML = `<p style="text-align:center;color:#64748b;padding:40px 0">Sin resultados</p>`;
     return;
   }
-  data.forEach(r => {
-    const div = document.createElement('div');
-    div.className = 'review';
-    div.innerHTML = `<strong>${escapeHtml(r.name)}</strong> — ⭐${r.rating}<br><em>${escapeHtml(r.text)}</em>`;
-    listDiv.appendChild(div);
-  });
+  filtered.forEach(p => container.appendChild(createProductCard(p)));
 }
 
-function setupReviews() {
-  const form = document.getElementById('add-review-form');
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const seller = document.getElementById('profile-name').textContent;
-    const name = document.getElementById('reviewer-name').value.trim();
-    const rating = document.getElementById('review-rating').value;
-    const text = document.getElementById('review-text').value.trim();
-
-    if (!name || !rating || !text) return alert('Completa todos los campos');
-
-    const data = JSON.parse(localStorage.getItem(getReviewsKey(seller)) || '[]');
-    data.push({ name, rating, text });
-    localStorage.setItem(getReviewsKey(seller), JSON.stringify(data));
-    form.reset();
-    loadReviews(seller);
+/* ===== Modal de producto ===== */
+function openModal(p){
+  closeProfile();
+  closeUserModal();
+  const modal = document.getElementById("product-modal");
+  document.getElementById("modal-image").src = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name)}`;
+  document.getElementById("modal-name").textContent = p.name;
+  document.getElementById("modal-price").textContent = `💰 ${Number(p.price).toFixed(2)}€`;
+  const sellerEl = document.getElementById("modal-seller");
+  sellerEl.innerHTML = `👤 <a href="#" id="seller-link">${escapeHtml(p.seller)}</a>`;
+  sellerEl.querySelector("#seller-link").addEventListener("click", (ev)=>{
+    ev.preventDefault();
+    closeModal();
+    openProfile(p.seller);
   });
-
-  document.getElementById('clear-reviews').addEventListener('click', () => {
-    const seller = document.getElementById('profile-name').textContent;
-    if (confirm('¿Borrar todas las reseñas?')) {
-      localStorage.removeItem(getReviewsKey(seller));
-      loadReviews(seller);
-    }
-  });
+  document.getElementById("modal-category").textContent = `📦 ${p.category || "Sin categoría"}`;
+  document.getElementById("modal-achievement").textContent = p.achievement || "";
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden","false");
+}
+function closeModal(){
+  const modal = document.getElementById("product-modal");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden","true");
 }
 
-// --- PERFIL DE USUARIO (Vendedor autenticado local) ---
-const editModal = document.getElementById('edit-profile-modal');
-document.getElementById('user-profile-btn').onclick = () => {
-  if (userProfile) {
-    document.getElementById('edit-profile-name').value = userProfile.name;
-    document.getElementById('edit-profile-bio').value = userProfile.bio;
-    document.getElementById('edit-profile-avatar').value = userProfile.avatar;
-    document.getElementById('edit-profile-avatar-preview').src = userProfile.avatar || 'https://via.placeholder.com/100';
-  }
-  editModal.style.display = 'flex';
-};
-
-document.getElementById('close-edit-profile').onclick = () => {
-  editModal.style.display = 'none';
-};
-
-document.getElementById('save-profile').onclick = () => {
-  const name = document.getElementById('edit-profile-name').value.trim();
-  const bio = document.getElementById('edit-profile-bio').value.trim();
-  const avatar = document.getElementById('edit-profile-avatar').value.trim();
-  if (!name) return alert('Debes poner un nombre.');
-  const profile = { name, bio, avatar };
-  saveUserProfile(profile);
-  alert('✅ Perfil guardado.');
-  editModal.style.display = 'none';
-};
-
-// --- BÚSQUEDA Y FILTRO ---
-function setupSearch() {
-  const input = document.getElementById('search-input');
-  const select = document.getElementById('filter-category');
-  function filter() {
-    const term = input.value.toLowerCase();
-    const cat = select.value;
-    const filtered = products.filter(p =>
-      (!cat || p.category === cat) &&
-      (p.name.toLowerCase().includes(term) || p.seller.toLowerCase().includes(term))
-    );
-    renderProducts(filtered);
-  }
-  input.addEventListener('input', filter);
-  select.addEventListener('change', filter);
+/* ===== Perfil del usuario (modal propio) ===== */
+function openUserModal(){
+  const modal = document.getElementById("user-modal");
+  const user = getUserProfile() || {};
+  document.getElementById("user-name").value = user.name || "";
+  document.getElementById("user-bio").value = user.bio || "";
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden","false");
+}
+function closeUserModal(){
+  const modal = document.getElementById("user-modal");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden","true");
 }
 
-// --- INICIALIZAR ---
-document.addEventListener('DOMContentLoaded', () => {
-  loadUserProfile();
-  setupForm();
-  setupSearch();
-  setupReviews();
+/* ===== Añadir producto local ===== */
+function addLocalProduct(p){
+  const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
+  const normalized = {
+    name: p.name,
+    price: Number(p.price) || 0,
+    seller: p.seller || "Anónimo",
+    category: p.category || "Sin categoría",
+    image: p.image || null,
+    achievement: p.achievement || ""
+  };
+  local.unshift(normalized);
+  localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(local));
   loadProducts();
-});
+}
+
+function clearLocalProducts(){
+  if(!confirm("¿Borrar todos los productos locales?")) return;
+  localStorage.removeItem(LOCAL_PRODUCTS_KEY);
+  loadProducts();
+}
+
+/* ===== Inicialización ===== */
+function setup(){
+  const form = document.getElementById("add-product-form");
+  form.addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const name = form["product-name"].value.trim();
+    const price = Number(form["product-price"].value);
+    const category = form["product-category"].value;
+    const image = form["product-image"].value.trim();
+    const user = getUserProfile();
+    const seller = user?.name || "Anónimo";
+    if(!name || !category || isNaN(price)){
+      return alert("Por favor, completa todos los campos correctamente.");
+    }
+    addLocalProduct({ name, price, seller, category, image, achievement: "🆕 Añadido localmente" });
+    form.reset();
+  });
+
+  document.getElementById("clear-local").addEventListener("click", clearLocalProducts);
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("close-user-modal").addEventListener("click", closeUserModal);
+
+  document.getElementById("user-profile-icon").addEventListener("click", openUserModal);
+  document.getElementById("save-user-profile").addEventListener("click", ()=>{
+    const name = document.getElementById("user-name").value.trim();
+    const bio = document.getElementById("user-bio").value.trim();
+    if(!name) return alert("Introduce un nombre para tu perfil.");
+    saveUserProfile({ name, bio });
+    closeUserModal();
+    alert("Perfil guardado correctamente.");
+  });
+
+  const searchInput = document.getElementById("search-input");
+  let timer = null;
+  searchInput.addEventListener("input", ()=> {
+    clearTimeout(timer);
+    timer = setTimeout(renderFiltered, 140);
+  });
+  document.getElementById("filter-category").addEventListener("change", renderFiltered);
+
+  updateUserIcon();
+  loadProducts();
+}
+
+/* ===== Arranque ===== */
+document.addEventListener("DOMContentLoaded", setup);
