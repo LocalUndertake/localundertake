@@ -1,130 +1,359 @@
-// ========== FUNCIONES EXISTENTES (resumen base de tu app) ==========
+/* ===== Estado global ===== */
+let allProducts = [];
+let sellerProfiles = {};
+let currentProfile = null;
 const LOCAL_PRODUCTS_KEY = "localundertake_products";
+const LOCAL_REVIEWS_KEY = "localundertake_reviews";
+const LOCAL_USER_KEY = "localundertake_user"; // <-- clave para perfil local
 
-function dicebearAvatar(seed) {
-  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4`;
+/* ===== Utilidades ===== */
+function safeLower(v){ return String(v || "").toLowerCase(); }
+function escapeHtml(t){ return t ? String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
+function dicebearAvatar(seed){
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,89cff0,f0a6ca`;
 }
 
-function loadLocalProducts() {
-  return JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
+/* ===== Perfil local - funciones mínimas añadidas ===== */
+function getUserProfile(){
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_USER_KEY) || "null");
+  } catch(e){ return null; }
+}
+function saveUserProfile(profile){
+  localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
+  updateUserIcon();
+  // si quieres también actualizar seller en productos mostrados, lo manejamos en setup/render
+}
+function updateUserIcon(){
+  const icon = document.getElementById("user-profile-icon");
+  const user = getUserProfile();
+  if(!icon) return;
+  if(user && user.name){
+    icon.style.backgroundImage = `url('${dicebearAvatar(user.name)}')`;
+  } else {
+    icon.style.backgroundImage = `url('https://api.dicebear.com/9.x/initials/svg?seed=User')`;
+  }
 }
 
-function saveLocalProducts(products) {
-  localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(products));
+/* ===== Crear tarjeta de producto ===== */
+function createProductCard(p){
+  const div = document.createElement("div");
+  div.className = "product";
+  const image = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name || "Producto")}`;
+  const category = p.category || "Sin categoría";
+  div.innerHTML = `
+    <img src="${image}" alt="${escapeHtml(p.name)}">
+    <div class="category-badge">${escapeHtml(category)}</div>
+    <div class="product-info">
+      <h3>${escapeHtml(p.name)}</h3>
+      <p>${Number(p.price).toFixed(2)}€</p>
+      <p style="color:#555;font-size:0.9rem;">👤 ${escapeHtml(p.seller)}</p>
+    </div>
+  `;
+  div.addEventListener("click", ()=> openModal(p));
+  return div;
 }
 
-function addLocalProduct(product) {
-  const products = loadLocalProducts();
-  products.push(product);
-  saveLocalProducts(products);
-  renderProducts(products);
+/* ===== Cargar productos ===== */
+async function loadProducts(){
+  const container = document.getElementById("product-list");
+  container.innerHTML = `<p class="placeholder">Cargando productos...</p>`;
+  try {
+    const res = await fetch("data/products.json");
+    const json = await res.json();
+    const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
+
+    allProducts = [...local, ...json].map(p => ({
+      name: p.name || "Sin nombre",
+      price: Number(p.price) || 0,
+      seller: p.seller || "Anónimo",
+      category: p.category || "Sin categoría",
+      image: p.image || null,
+      achievement: p.achievement || ""
+    }));
+
+    buildProfiles();
+    renderFiltered();
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<p style="text-align:center;color:#ef4444;padding:40px 0">Error al cargar productos.</p>`;
+  }
 }
 
-function renderProducts(products = loadLocalProducts()) {
-  const list = document.getElementById("product-list");
-  list.innerHTML = "";
+/* ===== Construir perfiles ===== */
+function buildProfiles(){
+  sellerProfiles = {};
+  allProducts.forEach(p => {
+    const key = p.seller;
+    if(!sellerProfiles[key]){
+      sellerProfiles[key] = {
+        name: key,
+        avatar: dicebearAvatar(key),
+        bio: `Vendedor local — ${key}`,
+        products: []
+      };
+    }
+    sellerProfiles[key].products.push(p);
+  });
 
-  if (!products.length) {
-    list.innerHTML = `<p class="placeholder">No hay productos aún. ¡Agrega uno!</p>`;
+  // cargar reseñas previas
+  const reviewsStore = JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}");
+  Object.keys(sellerProfiles).forEach(s => {
+    sellerProfiles[s].reviews = reviewsStore[s] || [];
+    if(reviewsStore[`__bio__:${s}`]) sellerProfiles[s].bio = reviewsStore[`__bio__:${s}`];
+  });
+}
+
+/* ===== Renderizado y filtros ===== */
+function renderFiltered(){
+  const q = safeLower(document.getElementById("search-input").value || "");
+  const cat = document.getElementById("filter-category").value || "";
+  const container = document.getElementById("product-list");
+  container.innerHTML = "";
+  const filtered = allProducts.filter(p=>{
+    const name = safeLower(p.name);
+    const seller = safeLower(p.seller);
+    const category = safeLower(p.category);
+    const matchText = q === "" || name.includes(q) || seller.includes(q) || category.includes(q);
+    const matchCat = !cat || p.category === cat;
+    return matchText && matchCat;
+  });
+  if(filtered.length === 0){
+    container.innerHTML = `<p style="text-align:center;color:#64748b;padding:40px 0">Sin resultados</p>`;
     return;
   }
-
-  products.forEach(p => {
-    const card = document.createElement("div");
-    card.className = "product-card";
-    card.innerHTML = `
-      <img src="${p.image || "https://via.placeholder.com/200"}" alt="${p.name}">
-      <h3>${p.name}</h3>
-      <p><strong>${p.price} €</strong></p>
-      <p>${p.seller}</p>
-      <p class="category">${p.category}</p>
-    `;
-    list.appendChild(card);
-  });
+  filtered.forEach(p => container.appendChild(createProductCard(p)));
 }
 
+/* ===== Modal de producto ===== */
+function openModal(p){
+  closeProfile(); // 🔹 cerrar perfil si está abierto
+  closeUserModal(); // si el modal user estuviera abierto, cerrarlo
+  const modal = document.getElementById("product-modal");
+  document.getElementById("modal-image").src = p.image || `https://via.placeholder.com/600x400?text=${encodeURIComponent(p.name)}`;
+  document.getElementById("modal-name").textContent = p.name;
+  document.getElementById("modal-price").textContent = `💰 ${Number(p.price).toFixed(2)}€`;
+  const sellerEl = document.getElementById("modal-seller");
+  sellerEl.innerHTML = `👤 <a href="#" id="seller-link">${escapeHtml(p.seller)}</a>`;
+  sellerEl.querySelector("#seller-link").addEventListener("click", (ev)=>{
+    ev.preventDefault();
+    closeModal();
+    openProfile(p.seller);
+  });
+  document.getElementById("modal-category").textContent = `📦 ${p.category || "Sin categoría"}`;
+  document.getElementById("modal-achievement").textContent = p.achievement || "";
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden","false");
+}
+function closeModal(){
+  const modal = document.getElementById("product-modal");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden","true");
+}
+
+/* ===== Perfil del vendedor ===== */
+function openProfile(sellerName){
+  closeModal(); // 🔹 cierra producto si está abierto
+  const profile = sellerProfiles[sellerName];
+  if(!profile) return;
+  currentProfile = sellerName;
+
+  document.getElementById("profile-avatar").src = profile.avatar;
+  document.getElementById("profile-name").textContent = profile.name;
+  document.getElementById("profile-name-2").textContent = profile.name;
+  document.getElementById("profile-bio").value = profile.bio || "";
+
+  document.getElementById("contact-seller").onclick = () => {
+    const text = encodeURIComponent(`Hola ${profile.name}, estoy interesado en tus productos en LocalUndertake.`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
+
+  const grid = document.getElementById("profile-products");
+  grid.innerHTML = "";
+  (profile.products || []).forEach(p => grid.appendChild(createProductCard(p)));
+
+  renderReviews(profile.name);
+
+  const modal = document.getElementById("profile-modal");
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden","false");
+}
+
+/* ===== Scroll global en perfil ===== */
 document.addEventListener("DOMContentLoaded", () => {
-  // Render inicial
-  renderProducts();
-
-  // Añadir producto
-  document.getElementById("add-product-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const p = {
-      name: document.getElementById("product-name").value,
-      price: document.getElementById("product-price").value,
-      seller: document.getElementById("product-seller").value,
-      category: document.getElementById("product-category").value,
-      image: document.getElementById("product-image").value
-    };
-    addLocalProduct(p);
-    e.target.reset();
-  });
-
-  // Limpiar productos locales
-  document.getElementById("clear-local").addEventListener("click", () => {
-    if (confirm("¿Seguro que deseas borrar todos los productos locales?")) {
-      localStorage.removeItem(LOCAL_PRODUCTS_KEY);
-      renderProducts([]);
-    }
-  });
+  const profileModal = document.getElementById("profile-modal");
+  if (profileModal) {
+    profileModal.querySelector(".modal-content").style.maxHeight = "90vh";
+    profileModal.querySelector(".modal-content").style.overflowY = "auto";
+    profileModal.querySelector(".modal-content").style.scrollBehavior = "smooth";
+  }
 });
 
-// ========== NUEVO: PERFIL DE USUARIO LOCAL ==========
-const LOCAL_USER_KEY = "localundertake_user";
-let localUser = JSON.parse(localStorage.getItem(LOCAL_USER_KEY) || "{}");
+/* ===== Bio y reseñas ===== */
+function saveBioForCurrent(){
+  if(!currentProfile) return;
+  const text = document.getElementById("profile-bio").value.trim();
+  sellerProfiles[currentProfile].bio = text;
+  const store = JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}");
+  store[`__bio__:${currentProfile}`] = text;
+  localStorage.setItem(LOCAL_REVIEWS_KEY, JSON.stringify(store));
+  alert("Bio guardada.");
+}
 
-function loadUserProfile() {
-  if (localUser.name) {
-    document.getElementById("profile-avatar-mini").src = localUser.avatar || dicebearAvatar(localUser.name);
+function getReviewsStore(){ return JSON.parse(localStorage.getItem(LOCAL_REVIEWS_KEY) || "{}"); }
+function saveReviewsStore(obj){ localStorage.setItem(LOCAL_REVIEWS_KEY, JSON.stringify(obj)); }
+
+function renderReviews(sellerName){
+  const reviewsDiv = document.getElementById("reviews-list");
+  reviewsDiv.innerHTML = "";
+  const store = getReviewsStore();
+  const reviews = store[sellerName] || [];
+  if(reviews.length === 0){
+    reviewsDiv.innerHTML = `<p style="color:#64748b">Aún no hay reseñas — sé el primero.</p>`;
+    return;
   }
+  reviews.slice().reverse().forEach(r => {
+    const d = document.createElement("div");
+    d.className = "review";
+    d.innerHTML = `<div class="meta"><span class="stars">${"★".repeat(r.rating)}</span> ${escapeHtml(r.reviewer)} — <span style="color:#94a3b8;font-weight:500">${new Date(r.date).toLocaleString()}</span></div>
+                   <div class="body">${escapeHtml(r.text)}</div>`;
+    reviewsDiv.appendChild(d);
+  });
 }
 
-function openUserModal() {
-  document.getElementById("user-name").value = localUser.name || "";
-  document.getElementById("user-bio").value = localUser.bio || "";
-  document.getElementById("user-avatar").src = localUser.avatar || dicebearAvatar(localUser.name || "Invitado");
+function addReviewForCurrent(e){
+  e.preventDefault();
+  if(!currentProfile) return alert("No hay perfil abierto.");
+  const reviewer = document.getElementById("reviewer-name").value.trim();
+  const rating = Number(document.getElementById("review-rating").value);
+  const text = document.getElementById("review-text").value.trim();
+  if(!reviewer || !rating || !text) return alert("Completa todos los campos de la reseña.");
+  const store = getReviewsStore();
+  store[currentProfile] = store[currentProfile] || [];
+  store[currentProfile].push({ reviewer, rating, text, date: new Date().toISOString() });
+  saveReviewsStore(store);
+  renderReviews(currentProfile);
+  document.getElementById("add-review-form").reset();
+}
+
+function clearReviewsForCurrent(){
+  if(!currentProfile) return;
+  if(!confirm("¿Borrar todas las reseñas de este vendedor?")) return;
+  const store = getReviewsStore();
+  delete store[currentProfile];
+  saveReviewsStore(store);
+  renderReviews(currentProfile);
+}
+
+/* ===== Cerrar perfil ===== */
+function closeProfile(){
+  const modal = document.getElementById("profile-modal");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden","true");
+  currentProfile = null;
+}
+
+/* ===== MODAL USUARIO (crear/editar perfil local) ===== */
+function openUserModal(){
   const modal = document.getElementById("user-modal");
+  const user = getUserProfile() || {};
+  document.getElementById("user-name").value = user.name || "";
+  document.getElementById("user-bio").value = user.bio || "";
   modal.style.display = "flex";
-  modal.setAttribute("aria-hidden", "false");
+  modal.setAttribute("aria-hidden","false");
 }
-
-function closeUserModal() {
+function closeUserModal(){
   const modal = document.getElementById("user-modal");
   modal.style.display = "none";
-  modal.setAttribute("aria-hidden", "true");
+  modal.setAttribute("aria-hidden","true");
 }
 
-function saveUserProfile() {
-  const name = document.getElementById("user-name").value.trim() || "Invitado";
-  const bio = document.getElementById("user-bio").value.trim() || "";
-  const avatar = dicebearAvatar(name);
-  localUser = { name, bio, avatar };
-  localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(localUser));
-  document.getElementById("profile-avatar-mini").src = avatar;
-  alert("Perfil guardado correctamente.");
-  closeUserModal();
+/* ===== Añadir producto local ===== */
+function addLocalProduct(p){
+  const local = JSON.parse(localStorage.getItem(LOCAL_PRODUCTS_KEY) || "[]");
+  const normalized = {
+    name: p.name,
+    price: Number(p.price) || 0,
+    seller: p.seller || "Anónimo",
+    category: p.category || "Sin categoría",
+    image: p.image || null,
+    achievement: p.achievement || ""
+  };
+  local.unshift(normalized);
+  localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(local));
+  loadProducts();
 }
 
-// Asignar productos al perfil actual
-const originalAddLocalProduct = addLocalProduct;
-addLocalProduct = function(p) {
-  if (localUser && localUser.name) {
-    p.seller = localUser.name;
+function clearLocalProducts(){
+  if(!confirm("¿Borrar todos los productos locales?")) return;
+  localStorage.removeItem(LOCAL_PRODUCTS_KEY);
+  loadProducts();
+}
+
+/* ===== Inicialización ===== */
+function setup(){
+  const form = document.getElementById("add-product-form");
+  form.addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const name = form["product-name"].value.trim();
+    const price = Number(form["product-price"].value);
+    const category = form["product-category"].value;
+    const image = form["product-image"].value.trim();
+    // usar perfil si existe
+    const user = getUserProfile();
+    const seller = user?.name || form["product-seller"].value.trim();
+    if(!name || !category || isNaN(price)){
+      return alert("Por favor, completa todos los campos correctamente.");
+    }
+    addLocalProduct({ name, price, seller, category, image, achievement: "🆕 Añadido localmente" });
+    form.reset();
+    // si hay perfil, rellenar el campo vendedor automáticamente (no lo borramos)
+    if(user?.name) document.getElementById("product-seller").value = user.name;
+  });
+
+  document.getElementById("clear-local").addEventListener("click", clearLocalProducts);
+  document.getElementById("close-modal").addEventListener("click", closeModal);
+  document.getElementById("close-profile").addEventListener("click", closeProfile);
+
+  // user modal handlers (añadido mínimo)
+  document.getElementById("user-profile-icon").addEventListener("click", openUserModal);
+  document.getElementById("close-user-modal").addEventListener("click", closeUserModal);
+  document.getElementById("save-user-profile").addEventListener("click", ()=>{
+    const name = document.getElementById("user-name").value.trim();
+    const bio = document.getElementById("user-bio").value.trim();
+    if(!name) return alert("Introduce un nombre para tu perfil.");
+    saveUserProfile({ name, bio });
+    // también actualizamos el input vendedor para facilitar al usuario
+    document.getElementById("product-seller").value = name;
+    closeUserModal();
+    alert("Perfil guardado correctamente.");
+  });
+
+  const searchInput = document.getElementById("search-input");
+  let timer = null;
+  searchInput.addEventListener("input", ()=> {
+    clearTimeout(timer);
+    timer = setTimeout(renderFiltered, 140);
+  });
+  document.getElementById("filter-category").addEventListener("change", renderFiltered);
+
+  document.getElementById("save-bio").addEventListener("click", saveBioForCurrent);
+  document.getElementById("add-review-form").addEventListener("submit", addReviewForCurrent);
+  document.getElementById("clear-reviews").addEventListener("click", clearReviewsForCurrent);
+
+  // actualizar icono y, si existe perfil, rellenar el vendedor del formulario
+  updateUserIcon();
+  const user = getUserProfile();
+  if(user && user.name){
+    const sellerInput = document.getElementById("product-seller");
+    if(sellerInput) sellerInput.value = user.name;
   }
-  originalAddLocalProduct(p);
-};
 
-// Eventos perfil usuario
-document.addEventListener("DOMContentLoaded", () => {
-  loadUserProfile();
+  loadProducts();
+}
 
-  const icon = document.getElementById("profile-icon");
-  if (icon) icon.addEventListener("click", openUserModal);
-
-  const closeBtn = document.getElementById("close-user");
-  if (closeBtn) closeBtn.addEventListener("click", closeUserModal);
-
-  const saveBtn = document.getElementById("save-user");
-  if (saveBtn) saveBtn.addEventListener("click", saveUserProfile);
+/* ===== Arranque ===== */
+document.addEventListener("DOMContentLoaded", ()=>{
+  setup();
+  // loadProducts(); // ya llamado en setup
 });
