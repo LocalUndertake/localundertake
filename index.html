@@ -14,10 +14,8 @@
       <p>Encuentra y apoya negocios locales — descubre productos únicos.</p>
     </div>
 
-    <!-- ICONO DE PERFIL -->
-    <div id="profile-icon" class="profile-icon" title="Tu perfil">
-      <img id="profile-avatar-mini" src="https://api.dicebear.com/9.x/initials/svg?seed=Invitado&backgroundColor=b6e3f4" alt="Icono perfil">
-    </div>
+    <!-- ICONO PERFIL (añadido MINIMAMENTE, no cambia diseño) -->
+    <div id="user-profile-icon" class="user-profile-icon" title="Tu perfil"></div>
   </header>
 
   <main>
@@ -133,23 +131,19 @@
           </form>
         </div>
       </div>
+
     </div>
   </div>
 
-  <!-- MODAL PERFIL DE USUARIO -->
+  <!-- MODAL USER (crear/editar TU perfil) - mínimo añadido -->
   <div id="user-modal" class="modal" aria-hidden="true">
-    <div class="modal-content profile-content" role="dialog" aria-modal="true">
-      <button id="close-user" class="modal-close" aria-label="Cerrar">&times;</button>
-      <div class="profile-header">
-        <img id="user-avatar" class="profile-avatar" src="https://api.dicebear.com/9.x/initials/svg?seed=Invitado&backgroundColor=b6e3f4" alt="Tu avatar">
-        <div class="profile-info">
-          <h3>Tu perfil</h3>
-          <input id="user-name" type="text" placeholder="Tu nombre o marca">
-          <textarea id="user-bio" class="profile-bio" rows="2" placeholder="Escribe una bio..."></textarea>
-          <div class="profile-actions">
-            <button id="save-user" class="small">Guardar perfil</button>
-          </div>
-        </div>
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <button id="close-user-modal" class="modal-close" aria-label="Cerrar">&times;</button>
+      <div class="modal-body">
+        <h3>👤 Tu perfil</h3>
+        <input id="user-name" type="text" placeholder="Tu nombre o marca" required style="margin-top:8px;">
+        <textarea id="user-bio" rows="2" placeholder="Cuéntanos algo sobre ti..." style="margin-top:8px;"></textarea>
+        <button id="save-user-profile" style="margin-top:10px;">Guardar perfil</button>
       </div>
     </div>
   </div>
