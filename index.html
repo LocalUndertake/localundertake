@@ -32,13 +32,10 @@
           <option>Tecnología</option>
           <option>Otros</option>
         </select>
-
-        <!-- 🔹 NUEVO: Campo URL y Descripción en la misma fila -->
-        <div style="display:flex; gap:8px; width:100%;">
-          <input id="product-image" type="url" placeholder="URL de imagen (opcional)" style="flex:1;">
-          <input id="product-description" type="text" placeholder="Descripción (opcional)" style="flex:1;">
+        <div class="two-cols">
+          <input id="product-image" type="url" placeholder="URL de imagen (opcional)">
+          <input id="product-description" type="text" placeholder="Descripción del producto (opcional)">
         </div>
-
         <div class="form-actions">
           <button type="submit">Añadir producto</button>
           <button id="clear-local" type="button" class="danger">Borrar productos locales</button>
@@ -75,7 +72,7 @@
 
   <!-- MODAL PRODUCTO -->
   <div id="product-modal" class="modal" aria-hidden="true">
-    <div class="modal-content">
+    <div class="modal-content product-scroll">
       <button id="close-modal" class="modal-close">&times;</button>
       <img id="modal-image" src="" alt="Imagen del producto">
       <div class="modal-body">
@@ -83,8 +80,27 @@
         <p id="modal-price"></p>
         <p id="modal-seller"></p>
         <p id="modal-category"></p>
-        <!-- 🔹 NUEVO: descripción debajo -->
-        <p id="modal-description" style="margin-top:8px; font-size:0.95rem; color:#444;"></p>
+        <p id="modal-description"></p>
+
+        <hr>
+        <h4>🗣️ Reseñas del producto</h4>
+        <div id="product-reviews-list"></div>
+        <form id="add-product-review-form" class="review-form">
+          <input id="product-reviewer-name" type="text" placeholder="Tu nombre" required>
+          <select id="product-review-rating" required>
+            <option value="">Puntuación</option>
+            <option value="5">5 — Excelente</option>
+            <option value="4">4 — Muy bueno</option>
+            <option value="3">3 — Bien</option>
+            <option value="2">2 — Regular</option>
+            <option value="1">1 — Malo</option>
+          </select>
+          <textarea id="product-review-text" rows="2" placeholder="Tu comentario" required></textarea>
+          <div style="display:flex;gap:8px;">
+            <button type="submit">Enviar reseña</button>
+            <button id="clear-product-reviews" type="button" class="danger small">Borrar reseñas</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
