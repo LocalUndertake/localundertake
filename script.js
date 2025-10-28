@@ -207,10 +207,8 @@ function openProductModal(product) {
 
   const modal = document.getElementById("product-modal");
   modal.style.display = "flex";
-
-  const modalContent = modal.querySelector(".modal-content");
-  modalContent.style.maxHeight = "90vh";
-  modalContent.style.overflowY = "auto";
+  modal.querySelector(".modal-content").style.maxHeight = "90vh";
+  modal.querySelector(".modal-content").style.overflowY = "auto";
 
   document.getElementById("modal-image").src = product.image;
   document.getElementById("modal-name").textContent = product.name;
@@ -226,17 +224,16 @@ function openProductModal(product) {
   if (descContainer)
     descContainer.textContent = product.description || "Sin descripción.";
 
-  // === 🔹 SECCIÓN DE RESEÑAS EN EL MODAL DEL PRODUCTO ===
-  const modalBody = modal.querySelector(".modal-body");
-  let productReviewsSection = document.getElementById("product-reviews-section");
-  if (!productReviewsSection) {
-    productReviewsSection = document.createElement("div");
-    productReviewsSection.id = "product-reviews-section";
-    productReviewsSection.innerHTML = `
-      <hr>
+  // === 🔹 RESEÑAS EN MODAL DE PRODUCTO ===
+  let reviewsSection = document.getElementById("product-reviews-section");
+  if (!reviewsSection) {
+    reviewsSection = document.createElement("div");
+    reviewsSection.id = "product-reviews-section";
+    reviewsSection.className = "reviews-section";
+    reviewsSection.innerHTML = `
       <h4>Reseñas del producto</h4>
       <div id="product-reviews-list"></div>
-      <form id="add-product-review-form" class="review-form" style="margin-top:8px;">
+      <form id="add-product-review-form" class="review-form">
         <input id="product-reviewer-name" type="text" placeholder="Tu nombre" required>
         <select id="product-review-rating" required>
           <option value="">Puntuación</option>
@@ -253,34 +250,54 @@ function openProductModal(product) {
         </div>
       </form>
     `;
-    modalBody.appendChild(productReviewsSection);
+    modal.querySelector(".modal-body").appendChild(reviewsSection);
   }
 
-  renderProductReviews(product.id);
-  setupProductReviewHandlers(product.id);
+  // Renderizar reseñas del producto
+  const profiles = getProfiles();
+  const productKey = `product_${product.id}`;
+  const productProfile = profiles[productKey] || { reviews: [] };
+  renderProductReviews(productProfile.reviews);
+
+  // Manejadores de reseñas del producto
+  const form = document.getElementById("add-product-review-form");
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const name = document.getElementById("product-reviewer-name").value.trim();
+    const rating = Number(document.getElementById("product-review-rating").value);
+    const text = document.getElementById("product-review-text").value.trim();
+    if (!name || !rating || !text) return;
+
+    if (!profiles[productKey]) profiles[productKey] = { reviews: [] };
+    profiles[productKey].reviews.push({
+      reviewer: name,
+      rating,
+      text,
+      date: new Date().toISOString(),
+    });
+    saveProfiles(profiles);
+    renderProductReviews(profiles[productKey].reviews);
+    form.reset();
+  };
+
+  document.getElementById("clear-product-reviews").onclick = () => {
+    if (confirm("¿Borrar todas las reseñas del producto?")) {
+      if (profiles[productKey]) profiles[productKey].reviews = [];
+      saveProfiles(profiles);
+      renderProductReviews([]);
+    }
+  };
 }
 
-function closeProductModal() {
-  document.getElementById("product-modal").style.display = "none";
-}
-document
-  .getElementById("close-modal")
-  ?.addEventListener("click", closeProductModal);
-
-// === RESEÑAS DE PRODUCTO ===
-function renderProductReviews(productId) {
+function renderProductReviews(reviews) {
   const list = document.getElementById("product-reviews-list");
   if (!list) return;
-
-  const profiles = getProfiles();
-  const allReviews = profiles[`product_${productId}`]?.reviews || [];
   list.innerHTML = "";
-  if (!allReviews.length) {
+  if (!reviews || !reviews.length) {
     list.innerHTML = "<p>Aún no hay reseñas.</p>";
     return;
   }
-
-  allReviews.forEach((r) => {
+  reviews.forEach((r) => {
     const div = document.createElement("div");
     div.className = "review";
     div.innerHTML = `<div class="meta"><span class="stars">${"★".repeat(
@@ -291,43 +308,12 @@ function renderProductReviews(productId) {
   });
 }
 
-function setupProductReviewHandlers(productId) {
-  const form = document.getElementById("add-product-review-form");
-  const clearBtn = document.getElementById("clear-product-reviews");
-  if (!form || !clearBtn) return;
-
-  form.onsubmit = (e) => {
-    e.preventDefault();
-    const name = document.getElementById("product-reviewer-name").value.trim();
-    const rating = Number(document.getElementById("product-review-rating").value);
-    const text = document.getElementById("product-review-text").value.trim();
-    if (!name || !rating || !text) return;
-
-    const profiles = getProfiles();
-    if (!profiles[`product_${productId}`])
-      profiles[`product_${productId}`] = { reviews: [] };
-
-    profiles[`product_${productId}`].reviews.push({
-      reviewer: name,
-      rating,
-      text,
-      date: new Date().toISOString(),
-    });
-
-    saveProfiles(profiles);
-    renderProductReviews(productId);
-    form.reset();
-  };
-
-  clearBtn.onclick = () => {
-    if (!confirm("¿Seguro que deseas borrar todas las reseñas del producto?"))
-      return;
-    const profiles = getProfiles();
-    if (profiles[`product_${productId}`]) profiles[`product_${productId}`].reviews = [];
-    saveProfiles(profiles);
-    renderProductReviews(productId);
-  };
+function closeProductModal() {
+  document.getElementById("product-modal").style.display = "none";
 }
+document
+  .getElementById("close-modal")
+  ?.addEventListener("click", closeProductModal);
 
 // === PERFIL DEL VENDEDOR ===
 function openProfileModal(seller) {
@@ -407,7 +393,7 @@ function saveSellerBio(seller) {
   alert("Biografía guardada.");
 }
 
-// === RESEÑAS DE VENDEDORES ===
+// === RESEÑAS DE PERFIL ===
 function renderReviews(reviews) {
   const list = document.getElementById("reviews-list");
   if (!list) return;
