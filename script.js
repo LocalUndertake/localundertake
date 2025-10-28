@@ -207,9 +207,6 @@ function openProductModal(product) {
 
   const modal = document.getElementById("product-modal");
   modal.style.display = "flex";
-  modal.querySelector(".modal-content").style.maxHeight = "90vh";
-  modal.querySelector(".modal-content").style.overflowY = "auto";
-
   document.getElementById("modal-image").src = product.image;
   document.getElementById("modal-name").textContent = product.name;
   document.getElementById("modal-price").textContent = `💶 ${product.price} €`;
@@ -224,13 +221,14 @@ function openProductModal(product) {
   if (descContainer)
     descContainer.textContent = product.description || "Sin descripción.";
 
-  // === 🔹 RESEÑAS EN MODAL DE PRODUCTO ===
-  let reviewsSection = document.getElementById("product-reviews-section");
-  if (!reviewsSection) {
-    reviewsSection = document.createElement("div");
-    reviewsSection.id = "product-reviews-section";
-    reviewsSection.className = "reviews-section";
-    reviewsSection.innerHTML = `
+  // === NUEVO: SISTEMA DE RESEÑAS PARA PRODUCTOS ===
+  if (!document.getElementById("product-reviews-section")) {
+    const modalBody = document.querySelector("#product-modal .modal-body");
+
+    const reviewsDiv = document.createElement("div");
+    reviewsDiv.className = "reviews-section";
+    reviewsDiv.id = "product-reviews-section";
+    reviewsDiv.innerHTML = `
       <h4>Reseñas del producto</h4>
       <div id="product-reviews-list"></div>
       <form id="add-product-review-form" class="review-form">
@@ -250,62 +248,47 @@ function openProductModal(product) {
         </div>
       </form>
     `;
-    modal.querySelector(".modal-body").appendChild(reviewsSection);
+    modalBody.appendChild(reviewsDiv);
   }
 
-  // Renderizar reseñas del producto
-  const profiles = getProfiles();
-  const productKey = `product_${product.id}`;
-  const productProfile = profiles[productKey] || { reviews: [] };
-  renderProductReviews(productProfile.reviews);
-
-  // Manejadores de reseñas del producto
+  const reviewsContainer = document.getElementById("product-reviews-list");
   const form = document.getElementById("add-product-review-form");
+  reviewsContainer.innerHTML = "";
+
+  const storedReviews = JSON.parse(localStorage.getItem(`productReviews_${product.id}`)) || [];
+  storedReviews.forEach(r => {
+    const div = document.createElement("div");
+    div.classList.add("review");
+    div.innerHTML = `<strong>${r.name}</strong> — ⭐ ${r.rating}<br>${r.text}`;
+    reviewsContainer.appendChild(div);
+  });
+
   form.onsubmit = (e) => {
     e.preventDefault();
-    const name = document.getElementById("product-reviewer-name").value.trim();
-    const rating = Number(document.getElementById("product-review-rating").value);
+    const reviewer = document.getElementById("product-reviewer-name").value.trim();
+    const rating = document.getElementById("product-review-rating").value;
     const text = document.getElementById("product-review-text").value.trim();
-    if (!name || !rating || !text) return;
 
-    if (!profiles[productKey]) profiles[productKey] = { reviews: [] };
-    profiles[productKey].reviews.push({
-      reviewer: name,
-      rating,
-      text,
-      date: new Date().toISOString(),
-    });
-    saveProfiles(profiles);
-    renderProductReviews(profiles[productKey].reviews);
+    if (!reviewer || !rating || !text) return alert("Completa todos los campos");
+
+    const newReview = { name: reviewer, rating, text };
+    const allReviews = JSON.parse(localStorage.getItem(`productReviews_${product.id}`)) || [];
+    allReviews.push(newReview);
+    localStorage.setItem(`productReviews_${product.id}`, JSON.stringify(allReviews));
+
+    const div = document.createElement("div");
+    div.classList.add("review");
+    div.innerHTML = `<strong>${reviewer}</strong> — ⭐ ${rating}<br>${text}`;
+    reviewsContainer.appendChild(div);
     form.reset();
   };
 
   document.getElementById("clear-product-reviews").onclick = () => {
-    if (confirm("¿Borrar todas las reseñas del producto?")) {
-      if (profiles[productKey]) profiles[productKey].reviews = [];
-      saveProfiles(profiles);
-      renderProductReviews([]);
+    if (confirm("¿Borrar todas las reseñas de este producto?")) {
+      localStorage.removeItem(`productReviews_${product.id}`);
+      reviewsContainer.innerHTML = "";
     }
   };
-}
-
-function renderProductReviews(reviews) {
-  const list = document.getElementById("product-reviews-list");
-  if (!list) return;
-  list.innerHTML = "";
-  if (!reviews || !reviews.length) {
-    list.innerHTML = "<p>Aún no hay reseñas.</p>";
-    return;
-  }
-  reviews.forEach((r) => {
-    const div = document.createElement("div");
-    div.className = "review";
-    div.innerHTML = `<div class="meta"><span class="stars">${"★".repeat(
-      r.rating || 0
-    )}</span> ${escapeHtml(r.reviewer || "Anon")}</div>
-                     <div class="body">${escapeHtml(r.text || "")}</div>`;
-    list.appendChild(div);
-  });
 }
 
 function closeProductModal() {
@@ -393,7 +376,7 @@ function saveSellerBio(seller) {
   alert("Biografía guardada.");
 }
 
-// === RESEÑAS DE PERFIL ===
+// === RESEÑAS ===
 function renderReviews(reviews) {
   const list = document.getElementById("reviews-list");
   if (!list) return;
@@ -453,3 +436,5 @@ document.getElementById("clear-reviews")?.addEventListener("click", () => {
   saveProfiles(profiles);
   renderReviews([]);
 });
+
+// === FIN DEL SCRIPT ===
